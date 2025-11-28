@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Pathfinder - Discover Your Perfect Career</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Styles -->
+    <style>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-in-out;
+        }
+        
+        .slide-in-left {
+            animation: slideInLeft 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideInLeft {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .language-urdu {
+            font-family: 'Segoe UI', 'Noto Sans Arabic', sans-serif;
+            direction: rtl;
+        }
+
+        .interest-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+
+        .interest-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .interest-card.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Enhanced spacing and styling */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .step-container {
+            min-height: 500px;
+        }
+        
+        .skill-level-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .progress-dot.active {
+            transform: scale(1.2);
+        }
+        
+        .career-card {
+            transition: all 0.3s ease;
+        }
+        
+        .career-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .roadmap-phase {
+            transition: all 0.3s ease;
+        }
+        
+        .roadmap-phase:hover {
+            transform: translateX(5px);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen p-4">
+    <!-- Language Toggle -->
+    <div class="fixed top-4 right-4 z-10">
+        <button id="languageToggle" class="bg-white rounded-full shadow-lg p-3 hover:shadow-xl transition-all duration-300">
+            <i class="fas fa-language text-blue-600 text-xl"></i>
+        </button>
+    </div>
+
+    <!-- App Container -->
+    <div id="app" class="max-w-4xl mx-auto pt-12">
+        <!-- Content will be loaded here by JavaScript -->
+    </div>
+
+    <script>
+        // Application Data and State
+        const CareerPathfinder = {
+            // Current application state
+            currentStep: 1,
+            totalSteps: 7,
+            language: 'en',
+            userData: {
+                personal: {},
+                skills: {},
+                interests: [],
+                answers: {}
+            },
+            careerMatches: null,
+            selectedCareer: null,
+            
+            // Translation dictionary
+            translations: {
+                en: {
+                    // Navigation
+                    'next': 'Next',
+                    'back': 'Back',
+                    'start': 'Get Started',
+                    'restart': 'Start Over',
+                    
+                    // Steps
+                    'step1-title': 'Discover Your Career Path',
+                    'step1-desc': 'Take our intelligent assessment to find careers that match your skills, interests, and personality.',
+                    
+                    'step2-title': 'Personal Information',
+                    'step2-desc': 'Tell us a bit about yourself to personalize your experience.',
+                    'name': 'Full Name',
+                    'age': 'Age',
+                    'education': 'Education Level',
+                    'current-field': 'Current Field/Interest',
+                    
+                    'step3-title': 'Your Interests',
+                    'step3-desc': 'Select up to 3 areas that genuinely interest you.',
+                    'select-up-to': 'Select up to',
+                    'selected': 'selected',
+                    
+                    'step4-title': 'Skill Assessment',
+                    'step4-desc': 'Rate your comfort level with these skills (be honest for best results).',
+                    
+                    'step5-title': 'Work Preferences',
+                    'step5-desc': 'What kind of work environment suits you best?',
+                    
+                    'step6-title': 'Career Matches',
+                    'step6-desc': 'Based on your profile, here are your top career recommendations:',
+                    'match': 'Match',
+                    'demand': 'Demand',
+                    'salary': 'Salary Range',
+                    'growth': 'Growth',
+                    
+                    'step7-title': 'Learning Path',
+                    'step7-desc': 'Your personalized learning roadmap to become a',
+                    'view-roadmap': 'View Full Roadmap',
+                    'start-tracking': 'Start Tracking Progress',
+                    
+                    // Common
+                    'high': 'High',
+                    'medium': 'Medium',
+                    'low': 'Low',
+                    'beginner': 'Beginner',
+                    'intermediate': 'Intermediate',
+                    'advanced': 'Advanced',
+                    'expert': 'Expert',
+                    
+                    // Education options
+                    'illiterate': 'No Formal Education',
+                    'high-school': 'High School',
+                    'some-college': 'Some College',
+                    'bachelors': 'Bachelor\'s Degree',
+                    'masters': 'Master\'s Degree',
+                    'phd': 'PhD',
+                    'other': 'Other',
+                    
+                    // Field options
+                    'student': 'Student',
+                    'technology': 'Technology',
+                    'business': 'Business',
+                    'healthcare': 'Healthcare',
+                    'creative': 'Creative Arts',
+                    'education': 'Education',
+                    'not-working': 'Not Working',
+                    
+                    // Interest options
+                    'programming': 'Programming',
+                    'design': 'Design',
+                    'data': 'Data Science',
+                    'business-interest': 'Business',
+                    'writing': 'Writing',
+                    'management': 'Management',
+                    
+                    // Workstyle options
+                    'remote': 'Remote Work',
+                    'office': 'Office Environment',
+                    'creative': 'Creative Space',
+                    'startup': 'Startup Culture'
+                },
+                ur: {
+                    // Navigation
+                    'next': 'آگے',
+                    'back': 'پیچھے',
+                    'start': 'شروع کریں',
+                    'restart': 'دوبارہ شروع کریں',
+                    
+                    // Steps
+                    'step1-title': 'اپنا کیریئر پاتھ دریافت کریں',
+                    'step1-desc': 'ہماری ذہین تشخیص لیں تاکہ آپ کی صلاحیتوں، دلچسپیوں اور شخصیت سے مماثل کیریئرز تلاش کر سکیں۔',
+                    
+                    'step2-title': 'ذاتی معلومات',
+                    'step2-desc': 'اپنے تجربے کو ذاتی بنانے کے لیے ہمیں اپنے بارے میں کچھ بتائیں۔',
+                    'name': 'پورا نام',
+                    'age': 'عمر',
+                    'education': 'تعلیمی سطح',
+                    'current-field': 'موجودہ فیلڈ/دلچسپی',
+                    
+                    'step3-title': 'آپ کی دلچسپیاں',
+                    'step3-desc': 'وہ شعبے منتخب کریں جو آپ کو حقیقی طور پر دلچسپ لگتے ہیں (زیادہ سے زیادہ 3)۔',
+                    'select-up-to': 'منتخب کریں',
+                    'selected': 'منتخب شدہ',
+                    
+                    'step4-title': 'صلاحیتوں کا جائزہ',
+                    'step4-desc': 'ان صلاحیتوں کے ساتھ اپنی آرام دہ سطح درج کریں (بہترین نتائج کے لیے ایماندار رہیں)۔',
+                    
+                    'step5-title': 'کام کی ترجیحات',
+                    'step5-desc': 'کون سا کام کا ماحول آپ کے لیے موزوں ہے؟',
+                    
+                    'step6-title': 'کیریئر مماثلتیں',
+                    'step6-desc': 'آپ کے پروفائل کی بنیاد پر، آپ کے لیے یہ اعلیٰ کیریئر تجاویز ہیں:',
+                    'match': 'مماثلت',
+                    'demand': 'طلب',
+                    'salary': 'تنخواہ کی حد',
+                    'growth': 'ترقی',
+                    
+                    'step7-title': 'سیکھنے کا راستہ',
+                    'step7-desc': 'بننے کے لیے آپ کی ذاتی سیکھنے کی روڈ میپ',
+                    'view-roadmap': 'مکمل روڈ میپ دیکھیں',
+                    'start-tracking': 'پروگریس ٹریک کرنا شروع کریں',
+                    
+                    // Common
+                    'high': 'زیادہ',
+                    'medium': 'درمیانی',
+                    'low': 'کم',
+                    'beginner': 'شروعات',
+                    'intermediate': 'درمیانی',
+                    'advanced': 'اعلیٰ',
+                    'expert': 'ماہر',
+                    
+                    // Education options
+                    'illiterate': 'بغیر رسمی تعلیم',
+                    'high-school': 'ہائی اسکول',
+                    'some-college': 'کچھ کالج',
+                    'bachelors': 'بیچلر ڈگری',
+                    'masters': 'ماسٹر ڈگری',
+                    'phd': 'پی ایچ ڈی',
+                    'other': 'دیگر',
+                    
+                    // Field options
+                    'student': 'طالب علم',
+                    'technology': 'ٹیکنالوجی',
+                    'business': 'کاروبار',
+                    'healthcare': 'ہیلتھ کیئر',
+                    'creative': 'تخلیقی فنون',
+                    'education': 'تعلیم',
+                    'not-working': 'کام نہیں کر رہے',
+                    
+                    // Interest options
+                    'programming': 'پروگرامنگ',
+                    'design': 'ڈیزائن',
+                    'data': 'ڈیٹا سائنس',
+                    'business-interest': 'کاروبار',
+                    'writing': 'تحریر',
+                    'management': 'مینیجمنٹ',
+                    
+                    // Workstyle options
+                    'remote': 'ریموٹ کام',
+                    'office': 'دفتری ماحول',
+                    'creative': 'تخلیقی جگہ',
+                    'startup': 'اسٹارٹ اپ کلچر'
+                }
+            },
+            
+            // Questions data
+            questions: [
+                {
+                    id: 1,
+                    type: 'welcome',
+                    title: 'step1-title',
+                    description: 'step1-desc',
+                    icon: 'fa-compass'
+                },
+                {
+                    id: 2,
+                    type: 'personal',
+                    title: 'step2-title',
+                    description: 'step2-desc',
+                    icon: 'fa-user',
+                    fields: [
+                        { name: 'name', label: 'name', type: 'text', required: true },
+                        { name: 'age', label: 'age', type: 'number', required: true },
+                        { 
+                            name: 'education', 
+                            label: 'education', 
+                            type: 'select', 
+                            required: true,
+                            options: ['illiterate', 'high-school', 'some-college', 'bachelors', 'masters', 'phd', 'other']
+                        },
+                        { 
+                            name: 'current_field', 
+                            label: 'current-field', 
+                            type: 'select', 
+                            required: true,
+                            options: ['student', 'technology', 'business', 'healthcare', 'creative', 'education', 'not-working']
+                        }
+                    ]
+                },
+                {
+                    id: 3,
+                    type: 'interests',
+                    title: 'step3-title',
+                    description: 'step3-desc',
+                    icon: 'fa-heart',
+                    maxSelections: 3,
+                    options: [
+                        {
+                            id: 'programming',
+                            title: 'programming',
+                            description: 'Creating applications and software solutions',
+                            icon: 'fa-code',
+                            skills: { programming: 2, logic: 2, problem_solving: 2 }
+                        },
+                        {
+                            id: 'design',
+                            title: 'design',
+                            description: 'Creating beautiful and functional designs',
+                            icon: 'fa-palette',
+                            skills: { creativity: 2, visual: 2, empathy: 1 }
+                        },
+                        {
+                            id: 'data',
+                            title: 'data',
+                            description: 'Working with data to find insights',
+                            icon: 'fa-chart-line',
+                            skills: { analytical: 2, math: 2, programming: 1 }
+                        },
+                        {
+                            id: 'business',
+                            title: 'business-interest',
+                            description: 'Growing businesses and strategic planning',
+                            icon: 'fa-briefcase',
+                            skills: { communication: 2, strategy: 2, leadership: 1 }
+                        },
+                        {
+                            id: 'writing',
+                            title: 'writing',
+                            description: 'Creating written content and stories',
+                            icon: 'fa-pen',
+                            skills: { communication: 2, creativity: 2, research: 1 }
+                        },
+                        {
+                            id: 'management',
+                            title: 'management',
+                            description: 'Leading teams and managing projects',
+                            icon: 'fa-users',
+                            skills: { leadership: 2, organization: 2, communication: 1 }
+                        }
+                    ]
+                },
+                {
+                    id: 4,
+                    type: 'skills',
+                    title: 'step4-title',
+                    description: 'step4-desc',
+                    icon: 'fa-star',
+                    skills: [
+                        { name: 'problem_solving', label: 'Problem Solving', description: 'Breaking down complex problems' },
+                        { name: 'communication', label: 'Communication', description: 'Expressing ideas clearly' },
+                        { name: 'creativity', label: 'Creativity', description: 'Thinking outside the box' },
+                        { name: 'analytical', label: 'Analytical Thinking', description: 'Working with data and logic' },
+                        { name: 'organization', label: 'Organization', description: 'Planning and managing tasks' }
+                    ]
+                },
+                {
+                    id: 5,
+                    type: 'workstyle',
+                    title: 'step5-title',
+                    description: 'step5-desc',
+                    icon: 'fa-building',
+                    maxSelections: 1,
+                    options: [
+                        {
+                            id: 'remote',
+                            title: 'remote',
+                            description: 'Work from anywhere with flexible hours',
+                            icon: 'fa-laptop-house',
+                            skills: { self_motivation: 2, organization: 1 }
+                        },
+                        {
+                            id: 'office',
+                            title: 'office',
+                            description: 'Traditional office with clear routines',
+                            icon: 'fa-building',
+                            skills: { collaboration: 2, organization: 1 }
+                        },
+                        {
+                            id: 'creative',
+                            title: 'creative',
+                            description: 'Dynamic, collaborative creative spaces',
+                            icon: 'fa-paint-brush',
+                            skills: { creativity: 2, collaboration: 1 }
+                        },
+                        {
+                            id: 'startup',
+                            title: 'startup',
+                            description: 'Fast-moving with varied responsibilities',
+                            icon: 'fa-rocket',
+                            skills: { adaptability: 2, problem_solving: 1 }
+                        }
+                    ]
+                }
+            ],
+            
+            // Careers data
+            careers: [
+                {
+                    id: 'frontend',
+                    name: 'Frontend Developer',
+                    description: 'Build the visual, interactive parts of websites and applications',
+                    skills: { programming: 0.9, creativity: 0.7, problem_solving: 0.8, visual: 0.6 },
+                    demand: 'high',
+                    salary: '$70,000 - $120,000',
+                    growth: '22% (Much faster than average)',
+                    icon: 'fa-code',
+                    color: 'from-purple-500 to-pink-500',
+                    roadmap: {
+                        foundation: {
+                            title: 'Foundation',
+                            duration: '3-6 months',
+                            skills: ['HTML5', 'CSS3', 'JavaScript'],
+                            resources: ['freeCodeCamp', 'MDN Web Docs', 'JavaScript.info']
+                        },
+                        intermediate: {
+                            title: 'Intermediate',
+                            duration: '6-12 months',
+                            skills: ['React', 'Git', 'Responsive Design'],
+                            resources: ['React Documentation', 'Frontend Masters', 'YouTube Tutorials']
+                        },
+                        advanced: {
+                            title: 'Advanced',
+                            duration: '12+ months',
+                            skills: ['TypeScript', 'Testing', 'Performance'],
+                            resources: ['Advanced Courses', 'Open Source', 'Real Projects']
+                        }
+                    }
+                },
+                {
+                    id: 'data_scientist',
+                    name: 'Data Scientist',
+                    description: 'Extract insights and build models from data using statistics and ML',
+                    skills: { analytical: 0.9, programming: 0.8, math: 0.8, problem_solving: 0.9 },
+                    demand: 'high',
+                    salary: '$90,000 - $150,000',
+                    growth: '31% (Much faster than average)',
+                    icon: 'fa-chart-bar',
+                    color: 'from-blue-500 to-cyan-500',
+                    roadmap: {
+                        foundation: {
+                            title: 'Foundation',
+                            duration: '4-8 months',
+                            skills: ['Python', 'Statistics', 'SQL'],
+                            resources: ['Kaggle', 'Coursera', 'DataCamp']
+                        },
+                        intermediate: {
+                            title: 'Intermediate',
+                            duration: '8-15 months',
+                            skills: ['Machine Learning', 'Deep Learning', 'Big Data'],
+                            resources: ['Fast.ai', 'Coursera ML', 'YouTube Courses']
+                        },
+                        advanced: {
+                            title: 'Advanced',
+                            duration: '15+ months',
+                            skills: ['MLOps', 'Cloud Platforms', 'Advanced Stats'],
+                            resources: ['Advanced Courses', 'Research Papers', 'Real Projects']
+                        }
+                    }
+                },
+                {
+                    id: 'ux_designer',
+                    name: 'UX/UI Designer',
+                    description: 'Design digital products that provide meaningful user experiences',
+                    skills: { creativity: 0.9, visual: 0.8, empathy: 0.9, communication: 0.8 },
+                    demand: 'high',
+                    salary: '$65,000 - $110,000',
+                    growth: '18% (Faster than average)',
+                    icon: 'fa-pencil-alt',
+                    color: 'from-green-500 to-teal-500',
+                    roadmap: {
+                        foundation: {
+                            title: 'Foundation',
+                            duration: '3-6 months',
+                            skills: ['Design Principles', 'User Research', 'Wireframing'],
+                            resources: ['Google UX Certificate', 'Figma Tutorials', 'YouTube']
+                        },
+                        intermediate: {
+                            title: 'Intermediate',
+                            duration: '6-12 months',
+                            skills: ['UI Design', 'Interaction Design', 'Design Systems'],
+                            resources: ['Figma Academy', 'Design Courses', 'Practice Projects']
+                        },
+                        advanced: {
+                            title: 'Advanced',
+                            duration: '12+ months',
+                            skills: ['Product Strategy', 'UX Leadership', 'Accessibility'],
+                            resources: ['Advanced Courses', 'Mentorship', 'Real Projects']
+                        }
+                    }
+                }
+            ],
+            
+            // Initialize the application
+            init() {
+                this.loadFromLocalStorage();
+                this.setupEventListeners();
+                this.loadStepFromURL();
+                this.render();
+            },
+            
+            // Set up event listeners
+            setupEventListeners() {
+                // Language toggle
+                document.getElementById('languageToggle').addEventListener('click', () => {
+                    this.toggleLanguage();
+                });
+                
+                // Handle browser back/forward buttons
+                window.addEventListener('popstate', () => {
+                    this.loadStepFromURL();
+                });
+                
+                // Save data before page unload
+                window.addEventListener('beforeunload', () => {
+                    this.saveToLocalStorage();
+                });
+            },
+            
+            // Save data to localStorage
+            saveToLocalStorage() {
+                const data = {
+                    currentStep: this.currentStep,
+                    language: this.language,
+                    userData: this.userData,
+                    careerMatches: this.careerMatches,
+                    selectedCareer: this.selectedCareer
+                };
+                localStorage.setItem('careerPathfinderData', JSON.stringify(data));
+            },
+            
+            // Load data from localStorage
+            loadFromLocalStorage() {
+                const savedData = localStorage.getItem('careerPathfinderData');
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        this.currentStep = data.currentStep || 1;
+                        this.language = data.language || 'en';
+                        this.userData = data.userData || {
+                            personal: {},
+                            skills: {},
+                            interests: [],
+                            answers: {}
+                        };
+                        this.careerMatches = data.careerMatches || null;
+                        this.selectedCareer = data.selectedCareer || null;
+                        
+                        // Update HTML direction for Urdu
+                        document.documentElement.dir = this.language === 'ur' ? 'rtl' : 'ltr';
+                        document.documentElement.lang = this.language === 'ur' ? 'ur' : 'en';
+                        
+                        // Add language class to body for Urdu styling
+                        if (this.language === 'ur') {
+                            document.body.classList.add('language-urdu');
+                        } else {
+                            document.body.classList.remove('language-urdu');
+                        }
+                    } catch (e) {
+                        console.error('Error loading saved data:', e);
+                    }
+                }
+            },
+            
+            // Toggle between English and Urdu
+            toggleLanguage() {
+                this.language = this.language === 'en' ? 'ur' : 'en';
+                
+                // Update HTML direction for Urdu
+                document.documentElement.dir = this.language === 'ur' ? 'rtl' : 'ltr';
+                document.documentElement.lang = this.language === 'ur' ? 'ur' : 'en';
+                
+                // Add language class to body for Urdu styling
+                if (this.language === 'ur') {
+                    document.body.classList.add('language-urdu');
+                } else {
+                    document.body.classList.remove('language-urdu');
+                }
+                
+                this.saveToLocalStorage();
+                this.render();
+            },
+            
+            // Get translation for a key
+            t(key) {
+                return this.translations[this.language][key] || key;
+            },
+            
+            // Load step from URL hash
+            loadStepFromURL() {
+                const hash = window.location.hash;
+                if (hash) {
+                    const step = parseInt(hash.replace('#step', ''));
+                    if (step >= 1 && step <= this.totalSteps) {
+                        this.currentStep = step;
+                    }
+                } else {
+                    this.currentStep = 1;
+                }
+                this.render();
+            },
+            
+            // Update URL hash for current step
+            updateURL() {
+                window.history.pushState({}, '', `#step${this.currentStep}`);
+            },
+            
+            // Navigate to a specific step
+            goToStep(step) {
+                if (step >= 1 && step <= this.totalSteps) {
+                    this.currentStep = step;
+                    this.updateURL();
+                    this.saveToLocalStorage();
+                    this.render();
+                }
+            },
+            
+            // Navigate to next step
+            nextStep() {
+                if (this.currentStep < this.totalSteps) {
+                    this.currentStep++;
+                    this.updateURL();
+                    this.saveToLocalStorage();
+                    this.render();
+                }
+            },
+            
+            // Navigate to previous step
+            prevStep() {
+                if (this.currentStep > 1) {
+                    this.currentStep--;
+                    this.updateURL();
+                    this.saveToLocalStorage();
+                    this.render();
+                }
+            },
+            
+            // Render the current step
+            render() {
+                const app = document.getElementById('app');
+                
+                switch (this.currentStep) {
+                    case 1:
+                        app.innerHTML = this.renderWelcome();
+                        break;
+                    case 2:
+                        app.innerHTML = this.renderPersonalInfo();
+                        break;
+                    case 3:
+                        app.innerHTML = this.renderInterests();
+                        break;
+                    case 4:
+                        app.innerHTML = this.renderSkills();
+                        break;
+                    case 5:
+                        app.innerHTML = this.renderWorkstyle();
+                        break;
+                    case 6:
+                        app.innerHTML = this.renderResults();
+                        break;
+                    case 7:
+                        app.innerHTML = this.renderRoadmap();
+                        break;
+                }
+                
+                // Add fade-in animation
+                app.classList.add('fade-in');
+                setTimeout(() => app.classList.remove('fade-in'), 500);
+            },
+            
+            // Render welcome screen
+            renderWelcome() {
+                const question = this.questions.find(q => q.id === 1);
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 text-center step-container slide-in-right">
+                        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                            <i class="fas ${question.icon} text-white text-3xl"></i>
+                        </div>
+                        <h1 class="text-4xl font-bold text-gray-800 mb-4">${this.t(question.title)}</h1>
+                        <p class="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">${this.t(question.description)}</p>
+                        <button onclick="CareerPathfinder.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            ${this.t('start')} <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot ${i === 0 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Render personal information form
+            renderPersonalInfo() {
+                const question = this.questions.find(q => q.id === 2);
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
+                        <div class="flex items-center mb-8">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                <i class="fas ${question.icon} text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
+                                <p class="text-gray-600">${this.t(question.description)}</p>
+                            </div>
+                        </div>
+                        
+                        <form id="personalForm" class="space-y-6">
+                            ${question.fields.map(field => `
+                                <div class="form-group">
+                                    <label class="block text-gray-700 font-medium mb-3">${this.t(field.label)}</label>
+                                    ${field.type === 'select' ? `
+                                        <select name="${field.name}" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" required>
+                                            <option value="">${this.language === 'ur' ? 'منتخب کریں...' : 'Select...'}</option>
+                                            ${field.options.map(opt => `
+                                                <option value="${opt}" ${this.userData.personal[field.name] === opt ? 'selected' : ''}>${this.t(opt)}</option>
+                                            `).join('')}
+                                        </select>
+                                    ` : `
+                                        <input type="${field.type}" name="${field.name}" value="${this.userData.personal[field.name] || ''}" 
+                                            class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
+                                            placeholder="${this.language === 'ur' ? `اپنا ${this.t(field.label)} درج کریں` : `Enter your ${field.label.toLowerCase()}`}" required>
+                                    `}
+                                </div>
+                            `).join('')}
+                        </form>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
+                            </button>
+                            <button onclick="CareerPathfinder.savePersonalInfo()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot ${i < 2 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Save personal information from form
+            savePersonalInfo() {
+                const form = document.getElementById('personalForm');
+                const formData = new FormData(form);
+                
+                if (form.checkValidity()) {
+                    for (let [key, value] of formData.entries()) {
+                        this.userData.personal[key] = value;
+                    }
+                    this.saveToLocalStorage();
+                    this.nextStep();
+                } else {
+                    form.reportValidity();
+                }
+            },
+            
+            // Render interests selection
+            renderInterests() {
+                const question = this.questions.find(q => q.id === 3);
+                const selectedCount = this.userData.interests.length;
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
+                        <div class="flex items-center mb-8">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                <i class="fas ${question.icon} text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
+                                <p class="text-gray-600">${this.t(question.description)}</p>
+                                <p class="text-blue-600 font-medium mt-2">
+                                    ${this.t('select-up-to')} ${question.maxSelections} • 
+                                    ${selectedCount} ${this.t('selected')}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                            ${question.options.map(option => {
+                                const isSelected = this.userData.interests.includes(option.id);
+                                return `
+                                    <div class="interest-card border-2 ${isSelected ? 'selected border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'} rounded-xl p-6 text-center transition-all duration-300" 
+                                         onclick="CareerPathfinder.toggleInterest('${option.id}', ${question.maxSelections})">
+                                        <div class="w-16 h-16 mx-auto mb-4 rounded-full ${isSelected ? 'bg-blue-500' : 'bg-gray-100'} flex items-center justify-center transition-all duration-300">
+                                            <i class="fas ${option.icon} ${isSelected ? 'text-white' : 'text-gray-600'} text-2xl"></i>
+                                        </div>
+                                        <h3 class="font-bold text-gray-800 text-lg mb-2">${this.t(option.title)}</h3>
+                                        <p class="text-gray-600 text-sm mb-4">${option.description}</p>
+                                        
+                                        ${isSelected ? `
+                                            <div class="mt-2">
+                                                <span class="inline-block bg-blue-500 text-white text-xs px-3 py-1 rounded-full">
+                                                    <i class="fas fa-check mr-1"></i> ${this.language === 'ur' ? 'منتخب شدہ' : 'Selected'}
+                                                </span>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        <div class="mt-4 flex justify-center flex-wrap gap-1">
+                                            ${Object.keys(option.skills).map(skill => `
+                                                <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${skill}</span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
+                            </button>
+                            <button onclick="CareerPathfinder.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot ${i < 3 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Toggle interest selection
+            toggleInterest(interestId, maxSelections) {
+                const index = this.userData.interests.indexOf(interestId);
+                const question = this.questions.find(q => q.id === 3);
+                const option = question.options.find(opt => opt.id === interestId);
+                
+                if (index === -1) {
+                    // Add selection if under max
+                    if (this.userData.interests.length < maxSelections) {
+                        this.userData.interests.push(interestId);
+                        
+                        // Add skills from this interest
+                        if (option.skills) {
+                            Object.keys(option.skills).forEach(skill => {
+                                this.userData.skills[skill] = (this.userData.skills[skill] || 0) + option.skills[skill];
+                            });
+                        }
+                    }
+                } else {
+                    // Remove selection
+                    this.userData.interests.splice(index, 1);
+                    
+                    // Remove skills from this interest
+                    if (option.skills) {
+                        Object.keys(option.skills).forEach(skill => {
+                            this.userData.skills[skill] = (this.userData.skills[skill] || 0) - option.skills[skill];
+                        });
+                    }
+                }
+                
+                this.saveToLocalStorage();
+                this.render();
+            },
+            
+            // Render skills assessment
+            renderSkills() {
+                const question = this.questions.find(q => q.id === 4);
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
+                        <div class="flex items-center mb-8">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                <i class="fas ${question.icon} text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
+                                <p class="text-gray-600">${this.t(question.description)}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-8">
+                            ${question.skills.map(skill => {
+                                const currentValue = this.userData.skills[skill.name] || 0;
+                                const skillLevels = [
+                                    this.t('beginner'),
+                                    this.t('intermediate'), 
+                                    this.t('advanced'),
+                                    this.t('expert')
+                                ];
+                                
+                                return `
+                                    <div class="border border-gray-200 rounded-xl p-6 hover:border-blue-400 transition-all duration-300">
+                                        <div class="flex justify-between items-center mb-4">
+                                            <div>
+                                                <h3 class="font-bold text-gray-800 text-lg">${skill.label}</h3>
+                                                <p class="text-gray-600">${skill.description}</p>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                                                    ${currentValue > 0 ? skillLevels[currentValue-1] || 'Expert' : 'Not rated'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            ${[1, 2, 3, 4].map(level => `
+                                                <button type="button" 
+                                                    onclick="CareerPathfinder.setSkillLevel('${skill.name}', ${level})"
+                                                    class="skill-level-btn flex-1 py-3 text-center rounded-lg transition-all duration-300 ${currentValue >= level ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">
+                                                    ${level}
+                                                </button>
+                                            `).join('')}
+                                        </div>
+                                        <div class="flex justify-between text-xs text-gray-500 mt-2">
+                                            <span>${this.t('beginner')}</span>
+                                            <span>${this.t('expert')}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
+                            </button>
+                            <button onclick="CareerPathfinder.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot ${i < 4 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Set skill level
+            setSkillLevel(skillName, level) {
+                this.userData.skills[skillName] = level;
+                this.saveToLocalStorage();
+                this.render();
+            },
+            
+            // Render workstyle preferences
+            renderWorkstyle() {
+                const question = this.questions.find(q => q.id === 5);
+                const selectedOption = this.userData.answers.workstyle;
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
+                        <div class="flex items-center mb-8">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                <i class="fas ${question.icon} text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
+                                <p class="text-gray-600">${this.t(question.description)}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            ${question.options.map(option => {
+                                const isSelected = selectedOption === option.id;
+                                return `
+                                    <div class="border-2 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} rounded-xl p-6 cursor-pointer transition-all duration-300 hover:border-blue-400 hover:shadow-md" 
+                                         onclick="CareerPathfinder.selectWorkstyle('${option.id}')">
+                                        <div class="text-center">
+                                            <i class="fas ${option.icon} text-3xl ${isSelected ? 'text-blue-600' : 'text-gray-500'} mb-3"></i>
+                                            <h3 class="font-bold text-gray-800 text-lg">${this.t(option.title)}</h3>
+                                            <p class="text-gray-600 mt-2">${option.description}</p>
+                                            ${isSelected ? `
+                                                <div class="mt-3">
+                                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                                        ${this.language === 'ur' ? 'منتخب شدہ' : 'Selected'}
+                                                    </span>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
+                            </button>
+                            <button onclick="CareerPathfinder.calculateResults()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot ${i < 5 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Select workstyle option
+            selectWorkstyle(workstyleId) {
+                this.userData.answers.workstyle = workstyleId;
+                
+                // Add skills from selected workstyle
+                const question = this.questions.find(q => q.id === 5);
+                const option = question.options.find(opt => opt.id === workstyleId);
+                
+                if (option.skills) {
+                    Object.keys(option.skills).forEach(skill => {
+                        this.userData.skills[skill] = (this.userData.skills[skill] || 0) + option.skills[skill];
+                    });
+                }
+                
+                this.saveToLocalStorage();
+                this.render();
+            },
+            
+            // Calculate career matches
+            calculateResults() {
+                // Calculate match scores for each career
+                this.careerMatches = this.careers.map(career => {
+                    let score = 0;
+                    let totalWeight = 0;
+                    
+                    // Calculate based on required skills
+                    for (const [skill, weight] of Object.entries(career.skills)) {
+                        const userSkillLevel = this.userData.skills[skill] || 0;
+                        score += userSkillLevel * weight;
+                        totalWeight += 5 * weight; // Max skill level is 5
+                    }
+                    
+                    const matchPercentage = totalWeight > 0 ? (score / totalWeight) * 100 : 0;
+                    
+                    return {
+                        ...career,
+                        matchScore: Math.min(matchPercentage, 100)
+                    };
+                }).sort((a, b) => b.matchScore - a.matchScore);
+                
+                this.saveToLocalStorage();
+                this.nextStep();
+            },
+            
+            // Render results screen
+            renderResults() {
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
+                        <div class="flex items-center mb-8">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
+                                <i class="fas fa-trophy text-blue-600"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">${this.t('step6-title')}</h1>
+                                <p class="text-gray-600">${this.t('step6-desc')}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6 mt-8">
+                            ${this.careerMatches.map((career, index) => {
+                                const demandClass = career.demand === 'high' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+                                return `
+                                    <div class="career-card border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
+                                        <div class="flex flex-col md:flex-row md:items-center">
+                                            <div class="flex items-center mb-4 md:mb-0 md:flex-1">
+                                                <div class="w-16 h-16 rounded-xl bg-gradient-to-r ${career.color} flex items-center justify-center mr-4">
+                                                    <i class="fas ${career.icon} text-white text-2xl"></i>
+                                                </div>
+                                                <div>
+                                                    <h3 class="font-bold text-gray-800 text-xl">${career.name}</h3>
+                                                    <p class="text-gray-600">${career.description}</p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="flex items-center space-x-4">
+                                                <div class="text-center">
+                                                    <div class="text-2xl font-bold text-blue-600">${Math.round(career.matchScore)}%</div>
+                                                    <div class="text-gray-600 text-sm">${this.t('match')}</div>
+                                                </div>
+                                                <button onclick="CareerPathfinder.viewRoadmap('${career.id}')" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105">
+                                                    ${this.t('view-roadmap')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex flex-wrap gap-2 mt-4">
+                                            <span class="${demandClass} px-3 py-1 rounded-full text-sm font-medium">
+                                                ${this.t('demand')}: ${this.t(career.demand)}
+                                            </span>
+                                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                ${this.t('salary')}: ${career.salary}
+                                            </span>
+                                            <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
+                                                ${this.t('growth')}: ${career.growth}
+                                            </span>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
+                            </button>
+                            <button onclick="CareerPathfinder.viewRoadmap('${this.careerMatches[0].id}')" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                ${this.t('view-roadmap')} <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot ${i < 6 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // View roadmap for a specific career
+            viewRoadmap(careerId) {
+                this.selectedCareer = this.careers.find(c => c.id === careerId);
+                this.saveToLocalStorage();
+                this.nextStep();
+            },
+            
+            // Render roadmap screen
+            renderRoadmap() {
+                const career = this.selectedCareer || this.careerMatches[0];
+                
+                return `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
+                        <div class="flex items-center mb-8">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-r ${career.color} flex items-center justify-center mr-4">
+                                <i class="fas ${career.icon} text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-800">${this.t('step7-title')}</h1>
+                                <p class="text-gray-600">${this.t('step7-desc')} <span class="font-semibold">${career.name}</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-6 mt-8">
+                            ${Object.entries(career.roadmap).map(([phaseKey, phase]) => `
+                                <div class="roadmap-phase border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="font-bold text-gray-800 text-xl">${phase.title}</h3>
+                                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                                            ${phase.duration}
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <h4 class="font-semibold text-gray-700 mb-2">Skills to Learn:</h4>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${phase.skills.map(skill => `
+                                                <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                                                    ${skill}
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 mb-2">Learning Resources:</h4>
+                                        <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                            ${phase.resources.map(resource => `
+                                                <li>${resource}</li>
+                                            `).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <div class="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
+                            <h3 class="font-bold text-gray-800 text-lg mb-2">Ready to start your journey?</h3>
+                            <p class="text-gray-600 mb-4">Get personalized reminders and track your progress</p>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <input type="email" id="emailInput" placeholder="${this.language === 'ur' ? 'اپنا ای میل درج کریں' : 'Enter your email'}" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <button onclick="CareerPathfinder.startTracking()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
+                                    ${this.t('start-tracking')}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between mt-8">
+                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
+                            </button>
+                            <button onclick="CareerPathfinder.restart()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                ${this.t('restart')} <i class="fas fa-redo ml-2"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="progress-dots">
+                            ${Array.from({length: this.totalSteps}, (_, i) => `
+                                <div class="progress-dot bg-blue-500 active"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            },
+            
+            // Start progress tracking
+            startTracking() {
+                const emailInput = document.getElementById('emailInput');
+                const email = emailInput.value;
+                
+                if (email && this.validateEmail(email)) {
+                    alert(`Thank you! We'll send ${this.selectedCareer.name} learning resources and progress reminders to ${email}. Check your email to get started!`);
+                    // In a real app, you would send this to your backend
+                    console.log('Tracking started for:', email, 'Career:', this.selectedCareer.name);
+                    emailInput.value = '';
+                } else {
+                    alert('Please enter a valid email address.');
+                }
+            },
+            
+            // Validate email format
+            validateEmail(email) {
+                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return re.test(email);
+            },
+            
+            // Restart the questionnaire
+            restart() {
+                this.currentStep = 1;
+                this.userData = {
+                    personal: {},
+                    skills: {},
+                    interests: [],
+                    answers: {}
+                };
+                this.careerMatches = null;
+                this.selectedCareer = null;
+                localStorage.removeItem('careerPathfinderData');
+                this.updateURL();
+                this.render();
+            }
+        };
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            CareerPathfinder.init();
+        });
+    </script>
+</body>
+</html>
