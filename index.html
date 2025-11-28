@@ -3,107 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Career Pathfinder - Discover Your Perfect Career</title>
+    <title>Career Pathfinder Pro - AI Career Assessment</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Custom Styles -->
     <style>
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
+        .fade-in { animation: fadeIn 0.6s ease-in-out; }
+        .slide-in-right { animation: slideInRight 0.6s ease-in-out; }
+        .slide-in-left { animation: slideInLeft 0.6s ease-in-out; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInLeft { from { transform: translateX(-30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .language-urdu { font-family: 'Segoe UI', 'Noto Sans Arabic', sans-serif; direction: rtl; }
+        .option-card { 
+            transition: all 0.3s ease; 
+            cursor: pointer; 
+            min-height: 180px;
+        }
+        .option-card:hover { transform: translateY(-5px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .option-card.selected { border-color: #3b82f6; background-color: #eff6ff; box-shadow: 0 15px 30px rgba(59, 130, 246, 0.15); }
+        
+        .progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.8s ease; }
+        
+        .question-text { font-size: 1.75rem; line-height: 1.2; }
+        
+        @media (max-width: 768px) {
+            .question-text { font-size: 1.5rem; }
         }
         
-        .slide-in-right {
-            animation: slideInRight 0.5s ease-in-out;
+        .loading-dots span {
+            animation: loading 1.4s ease-in-out infinite both;
         }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
         
-        .slide-in-left {
-            animation: slideInLeft 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes slideInRight {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideInLeft {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .language-urdu {
-            font-family: 'Segoe UI', 'Noto Sans Arabic', sans-serif;
-            direction: rtl;
+        @keyframes loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
         }
 
-        .interest-card {
-            transition: all 0.3s ease;
-            cursor: pointer;
-            height: 100%;
-        }
-
-        .interest-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .interest-card.selected {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-            box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.2);
-        }
-        
-        /* Enhanced spacing and styling */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .step-container {
-            min-height: 500px;
-        }
-        
-        .skill-level-btn {
-            transition: all 0.2s ease;
-        }
-        
-        .progress-dots {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 2rem;
-        }
-        
-        .progress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-        
-        .progress-dot.active {
-            transform: scale(1.2);
-        }
-        
         .career-card {
             transition: all 0.3s ease;
+            border-left: 4px solid transparent;
         }
-        
         .career-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .roadmap-phase {
-            transition: all 0.3s ease;
-        }
-        
-        .roadmap-phase:hover {
-            transform: translateX(5px);
+            border-left-color: #3b82f6;
         }
     </style>
 </head>
@@ -121,497 +70,249 @@
     </div>
 
     <script>
-        // Application Data and State
-        const CareerPathfinder = {
-            // Current application state
-            currentStep: 1,
-            totalSteps: 7,
+        // Career Pathfinder Pro - AI-Powered Career Assessment
+        const CareerPathfinderPro = {
+            // API Configuration - REPLACE WITH YOUR GEMINI API KEY
+            geminiApiKey: "AIzaSyBxjF-zIFdiBE4Y2i3AXV7XzDRdQfVjzMY", // Get from https://aistudio.google.com/api-keys
+            apiEndpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+            
+            // Application State
+            currentStep: 0,
+            totalSteps: 0,
             language: 'en',
             userData: {
                 personal: {},
-                skills: {},
                 interests: [],
+                skills: {},
+                personality: {},
+                preferences: {},
+                goals: {},
+                education: {},
+                experience: {},
                 answers: {}
             },
-            careerMatches: null,
-            selectedCareer: null,
+            careerRecommendations: null,
             
-            // Translation dictionary
-            translations: {
-                en: {
-                    // Navigation
-                    'next': 'Next',
-                    'back': 'Back',
-                    'start': 'Get Started',
-                    'restart': 'Start Over',
-                    
-                    // Steps
-                    'step1-title': 'Discover Your Career Path',
-                    'step1-desc': 'Take our intelligent assessment to find careers that match your skills, interests, and personality.',
-                    
-                    'step2-title': 'Personal Information',
-                    'step2-desc': 'Tell us a bit about yourself to personalize your experience.',
-                    'name': 'Full Name',
-                    'age': 'Age',
-                    'education': 'Education Level',
-                    'current-field': 'Current Field/Interest',
-                    
-                    'step3-title': 'Your Interests',
-                    'step3-desc': 'Select up to 3 areas that genuinely interest you.',
-                    'select-up-to': 'Select up to',
-                    'selected': 'selected',
-                    
-                    'step4-title': 'Skill Assessment',
-                    'step4-desc': 'Rate your comfort level with these skills (be honest for best results).',
-                    
-                    'step5-title': 'Work Preferences',
-                    'step5-desc': 'What kind of work environment suits you best?',
-                    
-                    'step6-title': 'Career Matches',
-                    'step6-desc': 'Based on your profile, here are your top career recommendations:',
-                    'match': 'Match',
-                    'demand': 'Demand',
-                    'salary': 'Salary Range',
-                    'growth': 'Growth',
-                    
-                    'step7-title': 'Learning Path',
-                    'step7-desc': 'Your personalized learning roadmap to become a',
-                    'view-roadmap': 'View Full Roadmap',
-                    'start-tracking': 'Start Tracking Progress',
-                    
-                    // Common
-                    'high': 'High',
-                    'medium': 'Medium',
-                    'low': 'Low',
-                    'beginner': 'Beginner',
-                    'intermediate': 'Intermediate',
-                    'advanced': 'Advanced',
-                    'expert': 'Expert',
-                    
-                    // Education options
-                    'illiterate': 'No Formal Education',
-                    'high-school': 'High School',
-                    'some-college': 'Some College',
-                    'bachelors': 'Bachelor\'s Degree',
-                    'masters': 'Master\'s Degree',
-                    'phd': 'PhD',
-                    'other': 'Other',
-                    
-                    // Field options
-                    'student': 'Student',
-                    'technology': 'Technology',
-                    'business': 'Business',
-                    'healthcare': 'Healthcare',
-                    'creative': 'Creative Arts',
-                    'education': 'Education',
-                    'not-working': 'Not Working',
-                    
-                    // Interest options
-                    'programming': 'Programming',
-                    'design': 'Design',
-                    'data': 'Data Science',
-                    'business-interest': 'Business',
-                    'writing': 'Writing',
-                    'management': 'Management',
-                    
-                    // Workstyle options
-                    'remote': 'Remote Work',
-                    'office': 'Office Environment',
-                    'creative': 'Creative Space',
-                    'startup': 'Startup Culture'
-                },
-                ur: {
-                    // Navigation
-                    'next': 'آگے',
-                    'back': 'پیچھے',
-                    'start': 'شروع کریں',
-                    'restart': 'دوبارہ شروع کریں',
-                    
-                    // Steps
-                    'step1-title': 'اپنا کیریئر پاتھ دریافت کریں',
-                    'step1-desc': 'ہماری ذہین تشخیص لیں تاکہ آپ کی صلاحیتوں، دلچسپیوں اور شخصیت سے مماثل کیریئرز تلاش کر سکیں۔',
-                    
-                    'step2-title': 'ذاتی معلومات',
-                    'step2-desc': 'اپنے تجربے کو ذاتی بنانے کے لیے ہمیں اپنے بارے میں کچھ بتائیں۔',
-                    'name': 'پورا نام',
-                    'age': 'عمر',
-                    'education': 'تعلیمی سطح',
-                    'current-field': 'موجودہ فیلڈ/دلچسپی',
-                    
-                    'step3-title': 'آپ کی دلچسپیاں',
-                    'step3-desc': 'وہ شعبے منتخب کریں جو آپ کو حقیقی طور پر دلچسپ لگتے ہیں (زیادہ سے زیادہ 3)۔',
-                    'select-up-to': 'منتخب کریں',
-                    'selected': 'منتخب شدہ',
-                    
-                    'step4-title': 'صلاحیتوں کا جائزہ',
-                    'step4-desc': 'ان صلاحیتوں کے ساتھ اپنی آرام دہ سطح درج کریں (بہترین نتائج کے لیے ایماندار رہیں)۔',
-                    
-                    'step5-title': 'کام کی ترجیحات',
-                    'step5-desc': 'کون سا کام کا ماحول آپ کے لیے موزوں ہے؟',
-                    
-                    'step6-title': 'کیریئر مماثلتیں',
-                    'step6-desc': 'آپ کے پروفائل کی بنیاد پر، آپ کے لیے یہ اعلیٰ کیریئر تجاویز ہیں:',
-                    'match': 'مماثلت',
-                    'demand': 'طلب',
-                    'salary': 'تنخواہ کی حد',
-                    'growth': 'ترقی',
-                    
-                    'step7-title': 'سیکھنے کا راستہ',
-                    'step7-desc': 'بننے کے لیے آپ کی ذاتی سیکھنے کی روڈ میپ',
-                    'view-roadmap': 'مکمل روڈ میپ دیکھیں',
-                    'start-tracking': 'پروگریس ٹریک کرنا شروع کریں',
-                    
-                    // Common
-                    'high': 'زیادہ',
-                    'medium': 'درمیانی',
-                    'low': 'کم',
-                    'beginner': 'شروعات',
-                    'intermediate': 'درمیانی',
-                    'advanced': 'اعلیٰ',
-                    'expert': 'ماہر',
-                    
-                    // Education options
-                    'illiterate': 'بغیر رسمی تعلیم',
-                    'high-school': 'ہائی اسکول',
-                    'some-college': 'کچھ کالج',
-                    'bachelors': 'بیچلر ڈگری',
-                    'masters': 'ماسٹر ڈگری',
-                    'phd': 'پی ایچ ڈی',
-                    'other': 'دیگر',
-                    
-                    // Field options
-                    'student': 'طالب علم',
-                    'technology': 'ٹیکنالوجی',
-                    'business': 'کاروبار',
-                    'healthcare': 'ہیلتھ کیئر',
-                    'creative': 'تخلیقی فنون',
-                    'education': 'تعلیم',
-                    'not-working': 'کام نہیں کر رہے',
-                    
-                    // Interest options
-                    'programming': 'پروگرامنگ',
-                    'design': 'ڈیزائن',
-                    'data': 'ڈیٹا سائنس',
-                    'business-interest': 'کاروبار',
-                    'writing': 'تحریر',
-                    'management': 'مینیجمنٹ',
-                    
-                    // Workstyle options
-                    'remote': 'ریموٹ کام',
-                    'office': 'دفتری ماحول',
-                    'creative': 'تخلیقی جگہ',
-                    'startup': 'اسٹارٹ اپ کلچر'
+            // Dynamic Question Flow - Questions change based on previous answers
+            getQuestionFlow() {
+                const baseQuestions = [
+                    {
+                        id: 'welcome',
+                        type: 'welcome',
+                        en: {
+                            title: 'Discover Your Ideal Career Path',
+                            description: 'Take our AI-powered assessment to find careers that truly match your personality, skills, and aspirations.',
+                            buttonText: 'Start Assessment'
+                        },
+                        ur: {
+                            title: 'اپنا مثالی کیریئر پاتھ دریافت کریں',
+                            description: 'ہماری AI سے چلنے والی تشخیص لیں تاکہ آپ کی شخصیت، صلاحیتوں اور خواہشات سے مماثل کیریئرز تلاش کر سکیں۔',
+                            buttonText: 'تشخیص شروع کریں'
+                        },
+                        image: 'https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80'
+                    },
+                    {
+                        id: 'education_level',
+                        type: 'single_choice',
+                        en: {
+                            question: 'What is your highest level of education?',
+                            options: [
+                                { id: 'high_school', text: 'High School', image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'some_college', text: 'Some College', image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'bachelors', text: "Bachelor's Degree", image: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'masters', text: "Master's Degree", image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'phd', text: 'PhD or Higher', image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        ur: {
+                            question: 'آپ کی تعلیمی سطح کیا ہے؟',
+                            options: [
+                                { id: 'high_school', text: 'ہائی اسکول', image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'some_college', text: 'کچھ کالج', image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'bachelors', text: 'بیچلر ڈگری', image: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'masters', text: 'ماسٹر ڈگری', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'phd', text: 'پی ایچ ڈی یا اس سے زیادہ', image: 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        field: 'education.level'
+                    },
+                    {
+                        id: 'work_experience',
+                        type: 'single_choice',
+                        en: {
+                            question: 'How many years of work experience do you have?',
+                            options: [
+                                { id: 'none', text: 'No experience', image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'less_than_1', text: 'Less than 1 year', image: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: '1_3', text: '1-3 years', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: '3_5', text: '3-5 years', image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: '5_plus', text: '5+ years', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        ur: {
+                            question: 'آپ کے پاس کتنے سال کا کام کا تجربہ ہے؟',
+                            options: [
+                                { id: 'none', text: 'کوئی تجربہ نہیں', image: 'https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'less_than_1', text: '1 سال سے کم', image: 'https://images.unsplash.com/photo-1521791055366-0d553872125f?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: '1_3', text: '1-3 سال', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: '3_5', text: '3-5 سال', image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: '5_plus', text: '5+ سال', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        field: 'experience.years'
+                    }
+                ];
+
+                // Dynamic questions based on previous answers
+                const dynamicQuestions = [];
+
+                // Add interest question
+                dynamicQuestions.push({
+                    id: 'interests_category',
+                    type: 'single_choice',
+                    en: {
+                        question: 'Which of these areas interests you the most?',
+                        options: [
+                            { id: 'technology', text: 'Technology & Computing', image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'business', text: 'Business & Management', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'creative', text: 'Creative Arts & Design', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'healthcare', text: 'Healthcare & Wellness', image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'education', text: 'Education & Training', image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                        ]
+                    },
+                    ur: {
+                        question: 'ان میں سے کون سا شعبہ آپ کو سب سے زیادہ دلچسپ لگتا ہے؟',
+                        options: [
+                            { id: 'technology', text: 'ٹیکنالوجی اور کمپیوٹنگ', image: 'https://images.unsplash.com/photo-1518709268805-4e9042af2176?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'business', text: 'کاروبار اور مینجمنٹ', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'creative', text: 'تخلیقی فنون اور ڈیزائن', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'healthcare', text: 'ہیلتھ کیئر اور تندرستی', image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'education', text: 'تعلیم اور تربیت', image: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                        ]
+                    },
+                    field: 'interests.primary_category'
+                });
+
+                // Add skills question based on interests
+                if (this.userData.interests.primary_category === 'technology') {
+                    dynamicQuestions.push({
+                        id: 'tech_skills',
+                        type: 'single_choice',
+                        en: {
+                            question: 'Which technical skills do you have or want to learn?',
+                            options: [
+                                { id: 'programming', text: 'Programming & Development', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'data_analysis', text: 'Data Analysis & Analytics', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'cybersecurity', text: 'Cybersecurity & Networks', image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'ai_ml', text: 'AI & Machine Learning', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        ur: {
+                            question: 'آپ کے پاس کون سی تکنیکی مہارتیں ہیں یا سیکھنا چاہتے ہیں؟',
+                            options: [
+                                { id: 'programming', text: 'پروگرامنگ اور ڈویلپمنٹ', image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'data_analysis', text: 'ڈیٹا تجزیہ اور تجزیات', image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'cybersecurity', text: 'سائبر سیکیورٹی اور نیٹ ورکس', image: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'ai_ml', text: 'AI اور مشین لرننگ', image: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        field: 'skills.technical_focus'
+                    });
+                } else if (this.userData.interests.primary_category === 'creative') {
+                    dynamicQuestions.push({
+                        id: 'creative_skills',
+                        type: 'single_choice',
+                        en: {
+                            question: 'Which creative skills do you have or want to develop?',
+                            options: [
+                                { id: 'graphic_design', text: 'Graphic Design & Visual Arts', image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'ux_ui', text: 'UX/UI Design', image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'writing', text: 'Writing & Content Creation', image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'video_production', text: 'Video & Multimedia Production', image: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        ur: {
+                            question: 'آپ کے پاس کون سی تخلیقی مہارتیں ہیں یا ترقی دینا چاہتے ہیں؟',
+                            options: [
+                                { id: 'graphic_design', text: 'گرافک ڈیزائن اور بصری فنون', image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'ux_ui', text: 'UX/UI ڈیزائن', image: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'writing', text: 'تحریر اور مواد کی تخلیق', image: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                                { id: 'video_production', text: 'ویڈیو اور ملٹی میڈیا پروڈکشن', image: 'https://images.unsplash.com/photo-1536240478700-b869070f9279?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                            ]
+                        },
+                        field: 'skills.creative_focus'
+                    });
                 }
+
+                // Add work preferences
+                dynamicQuestions.push({
+                    id: 'work_environment',
+                    type: 'single_choice',
+                    en: {
+                        question: 'What type of work environment do you prefer?',
+                        options: [
+                            { id: 'remote', text: 'Remote Work', image: 'https://images.unsplash.com/photo-1542744173-05336fcc7ad4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'office', text: 'Traditional Office', image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'hybrid', text: 'Hybrid (Mix of Both)', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'flexible', text: 'Flexible/No Preference', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                        ]
+                    },
+                    ur: {
+                        question: 'آپ کس قسم کے کام کے ماحول کو ترجیح دیتے ہیں؟',
+                        options: [
+                            { id: 'remote', text: 'ریموٹ کام', image: 'https://images.unsplash.com/photo-1542744173-05336fcc7ad4?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'office', text: 'روایتی دفتر', image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'hybrid', text: 'ہائبرڈ (دونوں کا مرکب)', image: 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'flexible', text: 'لچکدار/کوئی ترجیح نہیں', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                        ]
+                    },
+                    field: 'preferences.work_environment'
+                });
+
+                // Add career goals
+                dynamicQuestions.push({
+                    id: 'career_goals',
+                    type: 'single_choice',
+                    en: {
+                        question: 'What are your primary career goals?',
+                        options: [
+                            { id: 'growth', text: 'Rapid Career Growth', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'stability', text: 'Job Security & Stability', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'impact', text: 'Making a Positive Impact', image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'entrepreneur', text: 'Entrepreneurship/Business', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                        ]
+                    },
+                    ur: {
+                        question: 'آپ کے بنیادی کیریئر کے مقاصد کیا ہیں؟',
+                        options: [
+                            { id: 'growth', text: 'تیز رفتار کیریئر کی ترقی', image: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'stability', text: 'ملازمت کی حفاظت اور استحکام', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'impact', text: 'مثبت اثر ڈالنا', image: 'https://images.unsplash.com/photo-1551076805-e1869033e561?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' },
+                            { id: 'entrepreneur', text: 'انٹرپرینیورشپ/کاروبار', image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80' }
+                        ]
+                    },
+                    field: 'goals.primary'
+                });
+
+                return [...baseQuestions, ...dynamicQuestions];
             },
-            
-            // Questions data
-            questions: [
-                {
-                    id: 1,
-                    type: 'welcome',
-                    title: 'step1-title',
-                    description: 'step1-desc',
-                    icon: 'fa-compass'
-                },
-                {
-                    id: 2,
-                    type: 'personal',
-                    title: 'step2-title',
-                    description: 'step2-desc',
-                    icon: 'fa-user',
-                    fields: [
-                        { name: 'name', label: 'name', type: 'text', required: true },
-                        { name: 'age', label: 'age', type: 'number', required: true },
-                        { 
-                            name: 'education', 
-                            label: 'education', 
-                            type: 'select', 
-                            required: true,
-                            options: ['illiterate', 'high-school', 'some-college', 'bachelors', 'masters', 'phd', 'other']
-                        },
-                        { 
-                            name: 'current_field', 
-                            label: 'current-field', 
-                            type: 'select', 
-                            required: true,
-                            options: ['student', 'technology', 'business', 'healthcare', 'creative', 'education', 'not-working']
-                        }
-                    ]
-                },
-                {
-                    id: 3,
-                    type: 'interests',
-                    title: 'step3-title',
-                    description: 'step3-desc',
-                    icon: 'fa-heart',
-                    maxSelections: 3,
-                    options: [
-                        {
-                            id: 'programming',
-                            title: 'programming',
-                            description: 'Creating applications and software solutions',
-                            icon: 'fa-code',
-                            skills: { programming: 2, logic: 2, problem_solving: 2 }
-                        },
-                        {
-                            id: 'design',
-                            title: 'design',
-                            description: 'Creating beautiful and functional designs',
-                            icon: 'fa-palette',
-                            skills: { creativity: 2, visual: 2, empathy: 1 }
-                        },
-                        {
-                            id: 'data',
-                            title: 'data',
-                            description: 'Working with data to find insights',
-                            icon: 'fa-chart-line',
-                            skills: { analytical: 2, math: 2, programming: 1 }
-                        },
-                        {
-                            id: 'business',
-                            title: 'business-interest',
-                            description: 'Growing businesses and strategic planning',
-                            icon: 'fa-briefcase',
-                            skills: { communication: 2, strategy: 2, leadership: 1 }
-                        },
-                        {
-                            id: 'writing',
-                            title: 'writing',
-                            description: 'Creating written content and stories',
-                            icon: 'fa-pen',
-                            skills: { communication: 2, creativity: 2, research: 1 }
-                        },
-                        {
-                            id: 'management',
-                            title: 'management',
-                            description: 'Leading teams and managing projects',
-                            icon: 'fa-users',
-                            skills: { leadership: 2, organization: 2, communication: 1 }
-                        }
-                    ]
-                },
-                {
-                    id: 4,
-                    type: 'skills',
-                    title: 'step4-title',
-                    description: 'step4-desc',
-                    icon: 'fa-star',
-                    skills: [
-                        { name: 'problem_solving', label: 'Problem Solving', description: 'Breaking down complex problems' },
-                        { name: 'communication', label: 'Communication', description: 'Expressing ideas clearly' },
-                        { name: 'creativity', label: 'Creativity', description: 'Thinking outside the box' },
-                        { name: 'analytical', label: 'Analytical Thinking', description: 'Working with data and logic' },
-                        { name: 'organization', label: 'Organization', description: 'Planning and managing tasks' }
-                    ]
-                },
-                {
-                    id: 5,
-                    type: 'workstyle',
-                    title: 'step5-title',
-                    description: 'step5-desc',
-                    icon: 'fa-building',
-                    maxSelections: 1,
-                    options: [
-                        {
-                            id: 'remote',
-                            title: 'remote',
-                            description: 'Work from anywhere with flexible hours',
-                            icon: 'fa-laptop-house',
-                            skills: { self_motivation: 2, organization: 1 }
-                        },
-                        {
-                            id: 'office',
-                            title: 'office',
-                            description: 'Traditional office with clear routines',
-                            icon: 'fa-building',
-                            skills: { collaboration: 2, organization: 1 }
-                        },
-                        {
-                            id: 'creative',
-                            title: 'creative',
-                            description: 'Dynamic, collaborative creative spaces',
-                            icon: 'fa-paint-brush',
-                            skills: { creativity: 2, collaboration: 1 }
-                        },
-                        {
-                            id: 'startup',
-                            title: 'startup',
-                            description: 'Fast-moving with varied responsibilities',
-                            icon: 'fa-rocket',
-                            skills: { adaptability: 2, problem_solving: 1 }
-                        }
-                    ]
-                }
-            ],
-            
-            // Careers data
-            careers: [
-                {
-                    id: 'frontend',
-                    name: 'Frontend Developer',
-                    description: 'Build the visual, interactive parts of websites and applications',
-                    skills: { programming: 0.9, creativity: 0.7, problem_solving: 0.8, visual: 0.6 },
-                    demand: 'high',
-                    salary: '$70,000 - $120,000',
-                    growth: '22% (Much faster than average)',
-                    icon: 'fa-code',
-                    color: 'from-purple-500 to-pink-500',
-                    roadmap: {
-                        foundation: {
-                            title: 'Foundation',
-                            duration: '3-6 months',
-                            skills: ['HTML5', 'CSS3', 'JavaScript'],
-                            resources: ['freeCodeCamp', 'MDN Web Docs', 'JavaScript.info']
-                        },
-                        intermediate: {
-                            title: 'Intermediate',
-                            duration: '6-12 months',
-                            skills: ['React', 'Git', 'Responsive Design'],
-                            resources: ['React Documentation', 'Frontend Masters', 'YouTube Tutorials']
-                        },
-                        advanced: {
-                            title: 'Advanced',
-                            duration: '12+ months',
-                            skills: ['TypeScript', 'Testing', 'Performance'],
-                            resources: ['Advanced Courses', 'Open Source', 'Real Projects']
-                        }
-                    }
-                },
-                {
-                    id: 'data_scientist',
-                    name: 'Data Scientist',
-                    description: 'Extract insights and build models from data using statistics and ML',
-                    skills: { analytical: 0.9, programming: 0.8, math: 0.8, problem_solving: 0.9 },
-                    demand: 'high',
-                    salary: '$90,000 - $150,000',
-                    growth: '31% (Much faster than average)',
-                    icon: 'fa-chart-bar',
-                    color: 'from-blue-500 to-cyan-500',
-                    roadmap: {
-                        foundation: {
-                            title: 'Foundation',
-                            duration: '4-8 months',
-                            skills: ['Python', 'Statistics', 'SQL'],
-                            resources: ['Kaggle', 'Coursera', 'DataCamp']
-                        },
-                        intermediate: {
-                            title: 'Intermediate',
-                            duration: '8-15 months',
-                            skills: ['Machine Learning', 'Deep Learning', 'Big Data'],
-                            resources: ['Fast.ai', 'Coursera ML', 'YouTube Courses']
-                        },
-                        advanced: {
-                            title: 'Advanced',
-                            duration: '15+ months',
-                            skills: ['MLOps', 'Cloud Platforms', 'Advanced Stats'],
-                            resources: ['Advanced Courses', 'Research Papers', 'Real Projects']
-                        }
-                    }
-                },
-                {
-                    id: 'ux_designer',
-                    name: 'UX/UI Designer',
-                    description: 'Design digital products that provide meaningful user experiences',
-                    skills: { creativity: 0.9, visual: 0.8, empathy: 0.9, communication: 0.8 },
-                    demand: 'high',
-                    salary: '$65,000 - $110,000',
-                    growth: '18% (Faster than average)',
-                    icon: 'fa-pencil-alt',
-                    color: 'from-green-500 to-teal-500',
-                    roadmap: {
-                        foundation: {
-                            title: 'Foundation',
-                            duration: '3-6 months',
-                            skills: ['Design Principles', 'User Research', 'Wireframing'],
-                            resources: ['Google UX Certificate', 'Figma Tutorials', 'YouTube']
-                        },
-                        intermediate: {
-                            title: 'Intermediate',
-                            duration: '6-12 months',
-                            skills: ['UI Design', 'Interaction Design', 'Design Systems'],
-                            resources: ['Figma Academy', 'Design Courses', 'Practice Projects']
-                        },
-                        advanced: {
-                            title: 'Advanced',
-                            duration: '12+ months',
-                            skills: ['Product Strategy', 'UX Leadership', 'Accessibility'],
-                            resources: ['Advanced Courses', 'Mentorship', 'Real Projects']
-                        }
-                    }
-                }
-            ],
-            
+
             // Initialize the application
             init() {
-                this.loadFromLocalStorage();
                 this.setupEventListeners();
-                this.loadStepFromURL();
+                this.loadFromLocalStorage();
+                this.totalSteps = this.getQuestionFlow().length;
                 this.render();
             },
-            
+
             // Set up event listeners
             setupEventListeners() {
                 // Language toggle
                 document.getElementById('languageToggle').addEventListener('click', () => {
                     this.toggleLanguage();
                 });
-                
-                // Handle browser back/forward buttons
-                window.addEventListener('popstate', () => {
-                    this.loadStepFromURL();
-                });
-                
-                // Save data before page unload
-                window.addEventListener('beforeunload', () => {
-                    this.saveToLocalStorage();
-                });
             },
-            
-            // Save data to localStorage
-            saveToLocalStorage() {
-                const data = {
-                    currentStep: this.currentStep,
-                    language: this.language,
-                    userData: this.userData,
-                    careerMatches: this.careerMatches,
-                    selectedCareer: this.selectedCareer
-                };
-                localStorage.setItem('careerPathfinderData', JSON.stringify(data));
-            },
-            
-            // Load data from localStorage
-            loadFromLocalStorage() {
-                const savedData = localStorage.getItem('careerPathfinderData');
-                if (savedData) {
-                    try {
-                        const data = JSON.parse(savedData);
-                        this.currentStep = data.currentStep || 1;
-                        this.language = data.language || 'en';
-                        this.userData = data.userData || {
-                            personal: {},
-                            skills: {},
-                            interests: [],
-                            answers: {}
-                        };
-                        this.careerMatches = data.careerMatches || null;
-                        this.selectedCareer = data.selectedCareer || null;
-                        
-                        // Update HTML direction for Urdu
-                        document.documentElement.dir = this.language === 'ur' ? 'rtl' : 'ltr';
-                        document.documentElement.lang = this.language === 'ur' ? 'ur' : 'en';
-                        
-                        // Add language class to body for Urdu styling
-                        if (this.language === 'ur') {
-                            document.body.classList.add('language-urdu');
-                        } else {
-                            document.body.classList.remove('language-urdu');
-                        }
-                    } catch (e) {
-                        console.error('Error loading saved data:', e);
-                    }
-                }
-            },
-            
+
             // Toggle between English and Urdu
             toggleLanguage() {
                 this.language = this.language === 'en' ? 'ur' : 'en';
@@ -628,678 +329,775 @@
                 }
                 
                 this.saveToLocalStorage();
+                this.totalSteps = this.getQuestionFlow().length;
                 this.render();
             },
-            
-            // Get translation for a key
-            t(key) {
-                return this.translations[this.language][key] || key;
+
+            // Save data to localStorage
+            saveToLocalStorage() {
+                const data = {
+                    currentStep: this.currentStep,
+                    language: this.language,
+                    userData: this.userData
+                };
+                localStorage.setItem('careerPathfinderData', JSON.stringify(data));
             },
-            
-            // Load step from URL hash
-            loadStepFromURL() {
-                const hash = window.location.hash;
-                if (hash) {
-                    const step = parseInt(hash.replace('#step', ''));
-                    if (step >= 1 && step <= this.totalSteps) {
-                        this.currentStep = step;
+
+            // Load data from localStorage
+            loadFromLocalStorage() {
+                const savedData = localStorage.getItem('careerPathfinderData');
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        this.currentStep = data.currentStep || 0;
+                        this.language = data.language || 'en';
+                        this.userData = data.userData || {
+                            personal: {},
+                            interests: [],
+                            skills: {},
+                            personality: {},
+                            preferences: {},
+                            goals: {},
+                            education: {},
+                            experience: {},
+                            answers: {}
+                        };
+                        
+                        // Update HTML direction for Urdu
+                        document.documentElement.dir = this.language === 'ur' ? 'rtl' : 'ltr';
+                        document.documentElement.lang = this.language === 'ur' ? 'ur' : 'en';
+                        
+                        // Add language class to body for Urdu styling
+                        if (this.language === 'ur') {
+                            document.body.classList.add('language-urdu');
+                        } else {
+                            document.body.classList.remove('language-urdu');
+                        }
+                    } catch (e) {
+                        console.error('Error loading saved data:', e);
                     }
-                } else {
-                    this.currentStep = 1;
-                }
-                this.render();
-            },
-            
-            // Update URL hash for current step
-            updateURL() {
-                window.history.pushState({}, '', `#step${this.currentStep}`);
-            },
-            
-            // Navigate to a specific step
-            goToStep(step) {
-                if (step >= 1 && step <= this.totalSteps) {
-                    this.currentStep = step;
-                    this.updateURL();
-                    this.saveToLocalStorage();
-                    this.render();
                 }
             },
-            
+
             // Navigate to next step
             nextStep() {
-                if (this.currentStep < this.totalSteps) {
+                const questionFlow = this.getQuestionFlow();
+                if (this.currentStep < questionFlow.length - 1) {
                     this.currentStep++;
-                    this.updateURL();
                     this.saveToLocalStorage();
+                    this.totalSteps = questionFlow.length;
                     this.render();
+                } else {
+                    // Last question - generate recommendations
+                    this.generateCareerRecommendations();
                 }
             },
-            
+
             // Navigate to previous step
             prevStep() {
-                if (this.currentStep > 1) {
+                if (this.currentStep > 0) {
                     this.currentStep--;
-                    this.updateURL();
                     this.saveToLocalStorage();
+                    this.totalSteps = this.getQuestionFlow().length;
                     this.render();
                 }
             },
-            
+
+            // Select an option
+            selectOption(optionId) {
+                const questionFlow = this.getQuestionFlow();
+                const currentQuestion = questionFlow[this.currentStep];
+                
+                if (currentQuestion.field) {
+                    // Store the selected option in userData
+                    const fieldPath = currentQuestion.field.split('.');
+                    let currentObj = this.userData;
+                    
+                    for (let i = 0; i < fieldPath.length - 1; i++) {
+                        if (!currentObj[fieldPath[i]]) {
+                            currentObj[fieldPath[i]] = {};
+                        }
+                        currentObj = currentObj[fieldPath[i]];
+                    }
+                    
+                    currentObj[fieldPath[fieldPath.length - 1]] = optionId;
+                }
+                
+                // Store in answers for tracking
+                this.userData.answers[currentQuestion.id] = optionId;
+                
+                this.saveToLocalStorage();
+                
+                // Update total steps based on new question flow
+                this.totalSteps = this.getQuestionFlow().length;
+                
+                // Move to next question after a brief delay for better UX
+                setTimeout(() => {
+                    this.nextStep();
+                }, 300);
+            },
+
+            // Generate career recommendations using Gemini API
+            async generateCareerRecommendations() {
+                // Show loading state
+                this.showLoading();
+                
+                try {
+                    // Check if API key is set
+                    if (this.geminiApiKey === "AIzaSyBxjF-zIFdiBE4Y2i3AXV7XzDRdQfVjzMY") {
+                        throw new Error("Please add your Gemini API key");
+                    }
+
+                    const prompt = this.buildPrompt();
+                    
+                    const response = await fetch(`${this.apiEndpoint}?key=${this.geminiApiKey}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            contents: [{
+                                parts: [{
+                                    text: prompt
+                                }]
+                            }],
+                            generationConfig: {
+                                temperature: 0.7,
+                                topK: 40,
+                                topP: 0.95,
+                                maxOutputTokens: 2048,
+                            }
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(`API request failed: ${errorData.error?.message || response.status}`);
+                    }
+
+                    const data = await response.json();
+                    this.careerRecommendations = this.parseAIResponse(data);
+                    this.showResults();
+                    
+                } catch (error) {
+                    console.error('Error calling Gemini API:', error);
+                    // Fallback to dynamic mock data based on user input
+                    this.showDynamicMockResults();
+                }
+            },
+
+            // Build prompt for Gemini API
+            buildPrompt() {
+                const userProfile = this.buildUserProfile();
+                
+                return `
+                Analyze this user profile and provide personalized career recommendations:
+
+                USER PROFILE:
+                ${userProfile}
+
+                Please provide:
+                1. 3-5 career recommendations that specifically match their profile
+                2. For each career, include:
+                   - Career title
+                   - Match score (0-100%) with brief explanation
+                   - Brief description
+                   - Required skills and qualifications
+                   - Education path and timeline
+                   - Job outlook and growth potential
+                   - Average salary range
+                   - Specific learning resources (courses, platforms, certifications with URLs)
+                3. A personalized learning roadmap with phases and timeline
+
+                Format the response as valid JSON with this exact structure:
+                {
+                    "careers": [
+                        {
+                            "title": "Career Name",
+                            "matchScore": 85,
+                            "matchReason": "Brief explanation why this matches the user",
+                            "description": "Brief description",
+                            "requiredSkills": ["skill1", "skill2"],
+                            "educationPath": "Description of education needed",
+                            "timeline": "X-Y months/years",
+                            "jobOutlook": "Growth information",
+                            "salaryRange": "Salary information",
+                            "learningResources": [
+                                {
+                                    "name": "Resource Name",
+                                    "type": "course/certification/book",
+                                    "url": "https://example.com",
+                                    "description": "Brief description"
+                                }
+                            ]
+                        }
+                    ],
+                    "roadmap": {
+                        "overallTimeline": "X-Y months",
+                        "phases": [
+                            {
+                                "phase": "Foundation",
+                                "duration": "1-2 months",
+                                "tasks": ["Learn basic skills", "Build portfolio"],
+                                "resources": ["Resource 1", "Resource 2"]
+                            }
+                        ]
+                    }
+                }
+
+                Make sure the recommendations are highly personalized based on the user's education, experience, interests, and goals.
+                `;
+            },
+
+            // Build user profile from collected data
+            buildUserProfile() {
+                const profile = [];
+                
+                if (this.userData.education.level) {
+                    profile.push(`Education: ${this.userData.education.level}`);
+                }
+                
+                if (this.userData.experience.years) {
+                    profile.push(`Work Experience: ${this.userData.experience.years}`);
+                }
+                
+                if (this.userData.interests.primary_category) {
+                    profile.push(`Primary Interest: ${this.userData.interests.primary_category}`);
+                }
+                
+                if (this.userData.skills.technical_focus) {
+                    profile.push(`Technical Focus: ${this.userData.skills.technical_focus}`);
+                }
+                
+                if (this.userData.skills.creative_focus) {
+                    profile.push(`Creative Focus: ${this.userData.skills.creative_focus}`);
+                }
+                
+                if (this.userData.preferences.work_environment) {
+                    profile.push(`Work Environment Preference: ${this.userData.preferences.work_environment}`);
+                }
+                
+                if (this.userData.goals.primary) {
+                    profile.push(`Career Goals: ${this.userData.goals.primary}`);
+                }
+                
+                return profile.join('\n');
+            },
+
+            // Parse AI response
+            parseAIResponse(data) {
+                try {
+                    // Extract text from Gemini response
+                    const responseText = data.candidates[0].content.parts[0].text;
+                    
+                    // Try to extract JSON from the response
+                    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+                    if (jsonMatch) {
+                        return JSON.parse(jsonMatch[0]);
+                    } else {
+                        throw new Error("No JSON found in response");
+                    }
+                } catch (error) {
+                    console.error('Error parsing AI response:', error);
+                    throw error;
+                }
+            },
+
+            // Show dynamic mock results based on user input
+            showDynamicMockResults() {
+                const userProfile = this.buildUserProfile();
+                
+                // Generate recommendations based on user data
+                let careers = [];
+                
+                // Technology-focused careers
+                if (this.userData.interests.primary_category === 'technology') {
+                    if (this.userData.skills.technical_focus === 'programming') {
+                        careers = [
+                            {
+                                title: "Frontend Developer",
+                                matchScore: 88,
+                                matchReason: "Matches your interest in technology and programming skills",
+                                description: "Build interactive user interfaces for websites and applications",
+                                requiredSkills: ["HTML/CSS", "JavaScript", "React", "Responsive Design"],
+                                educationPath: "Bootcamp or self-study with portfolio projects",
+                                timeline: "6-12 months",
+                                jobOutlook: "22% growth (2022-2032) - Much faster than average",
+                                salaryRange: "$65,000 - $120,000",
+                                learningResources: [
+                                    {
+                                        name: "freeCodeCamp - Responsive Web Design",
+                                        type: "course",
+                                        url: "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+                                        description: "Free comprehensive web development curriculum"
+                                    },
+                                    {
+                                        name: "The Odin Project", 
+                                        type: "course",
+                                        url: "https://www.theodinproject.com/",
+                                        description: "Full-stack JavaScript curriculum"
+                                    }
+                                ]
+                            },
+                            {
+                                title: "Backend Developer",
+                                matchScore: 82,
+                                matchReason: "Aligns with your programming interest and technical mindset",
+                                description: "Develop server-side logic and database architecture",
+                                requiredSkills: ["Node.js/Python", "Databases", "APIs", "System Design"],
+                                educationPath: "Computer Science degree or backend-focused bootcamp",
+                                timeline: "9-15 months",
+                                jobOutlook: "Strong demand across all industries",
+                                salaryRange: "$75,000 - $130,000",
+                                learningResources: [
+                                    {
+                                        name: "Backend Developer Career Path",
+                                        type: "course",
+                                        url: "https://www.codecademy.com/learn/paths/back-end-engineer-career-path",
+                                        description: "Structured backend development learning path"
+                                    }
+                                ]
+                            }
+                        ];
+                    } else if (this.userData.skills.technical_focus === 'data_analysis') {
+                        careers = [
+                            {
+                                title: "Data Analyst",
+                                matchScore: 85,
+                                matchReason: "Matches your analytical interests and data skills",
+                                description: "Analyze data to help organizations make data-driven decisions",
+                                requiredSkills: ["SQL", "Python", "Excel", "Data Visualization"],
+                                educationPath: "Bachelor's in related field or data analytics certifications",
+                                timeline: "6-12 months",
+                                jobOutlook: "23% growth (2022-2032) - Much faster than average",
+                                salaryRange: "$55,000 - $95,000",
+                                learningResources: [
+                                    {
+                                        name: "Google Data Analytics Certificate",
+                                        type: "certification",
+                                        url: "https://grow.google/certificates/data-analytics/",
+                                        description: "Professional certificate from Google"
+                                    }
+                                ]
+                            }
+                        ];
+                    }
+                }
+                
+                // Creative-focused careers
+                else if (this.userData.interests.primary_category === 'creative') {
+                    careers = [
+                        {
+                            title: "UX/UI Designer",
+                            matchScore: 87,
+                            matchReason: "Matches your creative interests and design skills",
+                            description: "Design digital products that provide meaningful user experiences",
+                            requiredSkills: ["Figma", "User Research", "Wireframing", "Prototyping"],
+                            educationPath: "Design bootcamp or relevant degree with strong portfolio",
+                            timeline: "6-12 months",
+                            jobOutlook: "18% growth (2022-2032) - Faster than average",
+                            salaryRange: "$65,000 - $110,000",
+                            learningResources: [
+                                {
+                                    name: "Google UX Design Certificate",
+                                    type: "certification",
+                                    url: "https://grow.google/certificates/ux-design/",
+                                    description: "Professional UX design certification"
+                                }
+                            ]
+                        }
+                    ];
+                }
+                
+                // Business-focused careers
+                else if (this.userData.interests.primary_category === 'business') {
+                    careers = [
+                        {
+                            title: "Digital Marketing Specialist",
+                            matchScore: 84,
+                            matchReason: "Matches your business interests and growth goals",
+                            description: "Promote brands through digital channels and analyze campaign performance",
+                            requiredSkills: ["SEO", "Social Media", "Google Analytics", "Content Creation"],
+                            educationPath: "Marketing degree or digital marketing certifications",
+                            timeline: "3-9 months",
+                            jobOutlook: "16% growth (2022-2032) - Faster than average",
+                            salaryRange: "$45,000 - $85,000",
+                            learningResources: [
+                                {
+                                    name: "Google Digital Marketing Certificate",
+                                    type: "certification",
+                                    url: "https://grow.google/certificates/digital-marketing/",
+                                    description: "Comprehensive digital marketing certification"
+                                }
+                            ]
+                        }
+                    ];
+                }
+                
+                // Default recommendations if no specific match
+                if (careers.length === 0) {
+                    careers = this.getFallbackRecommendations();
+                }
+                
+                this.careerRecommendations = {
+                    careers: careers,
+                    roadmap: {
+                        overallTimeline: "6-12 months",
+                        phases: [
+                            {
+                                phase: "Foundation Building",
+                                duration: "2-4 months",
+                                tasks: ["Learn core concepts", "Complete beginner projects", "Build basic portfolio"],
+                                resources: ["Online courses", "Tutorials", "Practice projects"]
+                            },
+                            {
+                                phase: "Skill Development",
+                                duration: "3-5 months",
+                                tasks: ["Advanced learning", "Real-world projects", "Networking"],
+                                resources: ["Advanced courses", "Freelance projects", "Professional communities"]
+                            },
+                            {
+                                phase: "Job Preparation",
+                                duration: "1-3 months",
+                                tasks: ["Polish portfolio", "Prepare resume", "Practice interviews"],
+                                resources: ["Career services", "Mock interviews", "Job boards"]
+                            }
+                        ]
+                    }
+                };
+                
+                this.showResults();
+            },
+
+            // Fallback recommendations
+            getFallbackRecommendations() {
+                return [
+                    {
+                        title: "Project Coordinator",
+                        matchScore: 78,
+                        matchReason: "Good general career with growth opportunities",
+                        description: "Coordinate projects and teams to ensure successful completion",
+                        requiredSkills: ["Organization", "Communication", "Planning", "Team Coordination"],
+                        educationPath: "Bachelor's degree or project management certifications",
+                        timeline: "3-12 months",
+                        jobOutlook: "15% growth (2022-2032) - Faster than average",
+                        salaryRange: "$50,000 - $80,000",
+                        learningResources: [
+                            {
+                                name: "Google Project Management Certificate",
+                                type: "certification",
+                                url: "https://grow.google/certificates/project-management/",
+                                description: "Professional project management certification"
+                            }
+                        ]
+                    }
+                ];
+            },
+
+            // Show loading state
+            showLoading() {
+                const app = document.getElementById('app');
+                const lang = this.language;
+                
+                app.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 text-center fade-in">
+                        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                            <i class="fas fa-brain text-white text-3xl"></i>
+                        </div>
+                        <h1 class="text-3xl font-bold text-gray-800 mb-4">
+                            ${lang === 'ur' ? 'آپ کی کیریئر کی سفارشات تیار کی جا رہی ہیں' : 'Generating Your Career Recommendations'}
+                        </h1>
+                        <p class="text-gray-600 text-lg mb-8">
+                            ${lang === 'ur' ? 'ہماری AI آپ کے جوابات کا تجزیہ کر رہی ہے اور ذاتی نوعیت کی سفارشات تیار کر رہی ہے...' : 'Our AI is analyzing your responses and generating personalized recommendations...'}
+                        </p>
+                        <div class="loading-dots flex justify-center space-x-2">
+                            <span class="w-4 h-4 bg-blue-500 rounded-full"></span>
+                            <span class="w-4 h-4 bg-blue-500 rounded-full"></span>
+                            <span class="w-4 h-4 bg-blue-500 rounded-full"></span>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // Show results page
+            showResults() {
+                const app = document.getElementById('app');
+                const lang = this.language;
+                const recommendations = this.careerRecommendations;
+                
+                let careersHTML = '';
+                
+                recommendations.careers.forEach(career => {
+                    const matchColor = career.matchScore >= 85 ? 'from-green-500 to-emerald-600' : 
+                                     career.matchScore >= 75 ? 'from-blue-500 to-cyan-600' : 
+                                     'from-yellow-500 to-orange-600';
+                    
+                    careersHTML += `
+                        <div class="career-card bg-white rounded-xl shadow-lg p-6 mb-6 border-l-4 border-blue-500">
+                            <div class="flex flex-col md:flex-row md:items-start md:justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-2">${career.title}</h3>
+                                    <p class="text-gray-600 mb-3">${career.description}</p>
+                                    <p class="text-sm text-blue-600 mb-3"><strong>${lang === 'ur' ? 'مماثلت کی وجہ:' : 'Match Reason:'}</strong> ${career.matchReason}</p>
+                                </div>
+                                <div class="bg-gradient-to-r ${matchColor} text-white px-4 py-2 rounded-lg text-center min-w-24">
+                                    <div class="text-2xl font-bold">${career.matchScore}%</div>
+                                    <div class="text-sm opacity-90">${lang === 'ur' ? 'مماثلت' : 'Match'}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-700 mb-2">${lang === 'ur' ? 'مطلوبہ مہارتیں' : 'Required Skills'}</h4>
+                                    <div class="flex flex-wrap gap-2">
+                                        ${career.requiredSkills.map(skill => `
+                                            <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">${skill}</span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 mb-1">${lang === 'ur' ? 'تعلیمی راستہ' : 'Education Path'}</h4>
+                                        <p class="text-gray-600 text-sm">${career.educationPath}</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-700 mb-1">${lang === 'ur' ? 'وقت' : 'Timeline'}</h4>
+                                        <p class="text-gray-600 text-sm">${career.timeline}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-700 mb-1">${lang === 'ur' ? 'ملازمت کے مواقع' : 'Job Outlook'}</h4>
+                                    <p class="text-gray-600 text-sm">${career.jobOutlook}</p>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-700 mb-1">${lang === 'ur' ? 'تنخواہ کی حد' : 'Salary Range'}</h4>
+                                    <p class="text-gray-600 text-sm">${career.salaryRange}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <h4 class="font-semibold text-gray-700 mb-2">${lang === 'ur' ? 'سیکھنے کے وسائل' : 'Learning Resources'}</h4>
+                                <div class="space-y-2">
+                                    ${career.learningResources.map(resource => `
+                                        <div class="flex items-start">
+                                            <i class="fas fa-external-link-alt text-blue-500 mr-2 mt-1 flex-shrink-0"></i>
+                                            <div>
+                                                <a href="${resource.url}" target="_blank" class="text-blue-600 hover:underline font-medium">${resource.name}</a>
+                                                <p class="text-gray-500 text-sm">${resource.description}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                let roadmapHTML = '';
+                
+                recommendations.roadmap.phases.forEach(phase => {
+                    roadmapHTML += `
+                        <div class="bg-white rounded-lg shadow p-4 mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-semibold text-gray-800">${phase.phase}</h4>
+                                <span class="bg-green-100 text-green-800 text-sm px-3 py-1 rounded-full">${phase.duration}</span>
+                            </div>
+                            <div class="mb-3">
+                                <h5 class="font-medium text-gray-700 mb-1">${lang === 'ur' ? 'کام' : 'Tasks'}:</h5>
+                                <ul class="list-disc list-inside text-gray-600 text-sm space-y-1">
+                                    ${phase.tasks.map(task => `<li>${task}</li>`).join('')}
+                                </ul>
+                            </div>
+                            <div>
+                                <h5 class="font-medium text-gray-700 mb-1">${lang === 'ur' ? 'وسائل' : 'Resources'}:</h5>
+                                <p class="text-gray-600 text-sm">${phase.resources.join(', ')}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                app.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-xl p-8 fade-in">
+                        <div class="text-center mb-8">
+                            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-r from-green-500 to-blue-600 flex items-center justify-center">
+                                <i class="fas fa-trophy text-white text-2xl"></i>
+                            </div>
+                            <h1 class="text-3xl font-bold text-gray-800 mb-2">
+                                ${lang === 'ur' ? 'آپ کی کیریئر کی سفارشات' : 'Your Career Recommendations'}
+                            </h1>
+                            <p class="text-gray-600">
+                                ${lang === 'ur' ? 'آپ کے جوابات کی بنیاد پر ذاتی نوعیت کی کیریئر کی سفارشات' : 'Personalized career recommendations based on your responses'}
+                            </p>
+                        </div>
+                        
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                                ${lang === 'ur' ? 'تجویز کردہ کیریئرز' : 'Recommended Careers'}
+                            </h2>
+                            ${careersHTML}
+                        </div>
+                        
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                                ${lang === 'ur' ? 'آپ کا سیکھنے کا راستہ' : 'Your Learning Roadmap'}
+                            </h2>
+                            <div class="bg-blue-50 rounded-xl p-4 mb-4">
+                                <p class="text-blue-800 font-medium">
+                                    <i class="fas fa-clock mr-2"></i>
+                                    ${lang === 'ur' ? 'کل متوقع وقت: ' : 'Total Estimated Timeline: '}${recommendations.roadmap.overallTimeline}
+                                </p>
+                            </div>
+                            ${roadmapHTML}
+                        </div>
+                        
+                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200 text-center">
+                            <h3 class="font-bold text-gray-800 text-lg mb-2">
+                                ${lang === 'ur' ? 'اپنی کیریئر کی سفر جاری رکھیں' : 'Continue Your Career Journey'}
+                            </h3>
+                            <p class="text-gray-600 mb-4">
+                                ${lang === 'ur' ? 'ہماری پریمیم رہنمائی خدمات کے ساتھ اپنی کامیابی کو تیز کریں' : 'Accelerate your success with our premium mentoring services'}
+                            </p>
+                            <button onclick="CareerPathfinderPro.showMentoringOptions()" class="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                <i class="fas fa-crown mr-2"></i>
+                                ${lang === 'ur' ? 'مینٹورشپ آپشنز دیکھیں' : 'View Mentoring Options'}
+                            </button>
+                        </div>
+                        
+                        <div class="flex justify-center mt-8">
+                            <button onclick="CareerPathfinderPro.restartAssessment()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-8 rounded-xl transition-all duration-300 transform hover:scale-105">
+                                <i class="fas fa-redo mr-2"></i>
+                                ${lang === 'ur' ? 'تشخیص دوبارہ شروع کریں' : 'Restart Assessment'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // Show mentoring options
+            showMentoringOptions() {
+                const lang = this.language;
+                alert(lang === 'ur' ? 
+                    'مینٹورشپ کے اختیارات جلد دستیاب ہوں گے! براہ کرم ہماری ویب سائٹ چیک کریں یا ہم سے رابطہ کریں۔' : 
+                    'Mentoring options coming soon! Please check our website or contact us for premium career guidance.'
+                );
+            },
+
+            // Restart the assessment
+            restartAssessment() {
+                this.currentStep = 0;
+                this.userData = {
+                    personal: {},
+                    interests: [],
+                    skills: {},
+                    personality: {},
+                    preferences: {},
+                    goals: {},
+                    education: {},
+                    experience: {},
+                    answers: {}
+                };
+                this.careerRecommendations = null;
+                localStorage.removeItem('careerPathfinderData');
+                this.totalSteps = this.getQuestionFlow().length;
+                this.render();
+            },
+
             // Render the current step
             render() {
                 const app = document.getElementById('app');
+                const questionFlow = this.getQuestionFlow();
                 
-                switch (this.currentStep) {
-                    case 1:
-                        app.innerHTML = this.renderWelcome();
-                        break;
-                    case 2:
-                        app.innerHTML = this.renderPersonalInfo();
-                        break;
-                    case 3:
-                        app.innerHTML = this.renderInterests();
-                        break;
-                    case 4:
-                        app.innerHTML = this.renderSkills();
-                        break;
-                    case 5:
-                        app.innerHTML = this.renderWorkstyle();
-                        break;
-                    case 6:
-                        app.innerHTML = this.renderResults();
-                        break;
-                    case 7:
-                        app.innerHTML = this.renderRoadmap();
-                        break;
+                if (this.currentStep === 0) {
+                    app.innerHTML = this.renderWelcome();
+                } else if (this.currentStep < questionFlow.length) {
+                    app.innerHTML = this.renderQuestion();
+                } else {
+                    this.showResults();
                 }
                 
                 // Add fade-in animation
                 app.classList.add('fade-in');
-                setTimeout(() => app.classList.remove('fade-in'), 500);
+                setTimeout(() => app.classList.remove('fade-in'), 600);
             },
-            
+
             // Render welcome screen
             renderWelcome() {
-                const question = this.questions.find(q => q.id === 1);
+                const question = this.getQuestionFlow()[0];
+                const content = question[this.language];
                 
                 return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 text-center step-container slide-in-right">
-                        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                            <i class="fas ${question.icon} text-white text-3xl"></i>
-                        </div>
-                        <h1 class="text-4xl font-bold text-gray-800 mb-4">${this.t(question.title)}</h1>
-                        <p class="text-gray-600 text-lg mb-8 max-w-2xl mx-auto">${this.t(question.description)}</p>
-                        <button onclick="CareerPathfinder.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
-                            ${this.t('start')} <i class="fas fa-arrow-right ml-2"></i>
-                        </button>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot ${i === 0 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
-                            `).join('')}
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden slide-in-right">
+                        <div class="h-48 bg-cover bg-center" style="background-image: url('${question.image}')"></div>
+                        <div class="p-8 text-center">
+                            <h1 class="text-4xl font-bold text-gray-800 mb-4">${content.title}</h1>
+                            <p class="text-gray-600 text-lg mb-8">${content.description}</p>
+                            <button onclick="CareerPathfinderPro.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-4 px-8 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                                ${content.buttonText} <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
                         </div>
                     </div>
                 `;
             },
-            
-            // Render personal information form
-            renderPersonalInfo() {
-                const question = this.questions.find(q => q.id === 2);
+
+            // Render question screen
+            renderQuestion() {
+                const questionFlow = this.getQuestionFlow();
+                const question = questionFlow[this.currentStep];
+                const content = question[this.language];
+                const progress = ((this.currentStep) / (questionFlow.length - 1)) * 100;
+                
+                let optionsHTML = '';
+                
+                content.options.forEach(option => {
+                    optionsHTML += `
+                        <div class="option-card border-2 border-gray-200 rounded-xl overflow-hidden bg-white transition-all duration-300" 
+                             onclick="CareerPathfinderPro.selectOption('${option.id}')">
+                            <div class="h-32 bg-cover bg-center" style="background-image: url('${option.image}')"></div>
+                            <div class="p-4 text-center">
+                                <h3 class="font-bold text-gray-800 text-lg">${option.text}</h3>
+                            </div>
+                        </div>
+                    `;
+                });
                 
                 return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
-                        <div class="flex items-center mb-8">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas ${question.icon} text-blue-600"></i>
+                    <div class="bg-white rounded-2xl shadow-xl p-8 slide-in-${this.language === 'ur' ? 'left' : 'right'}">
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm font-medium text-gray-500">
+                                    ${this.language === 'ur' ? 'سوال' : 'Question'} ${this.currentStep} ${this.language === 'ur' ? 'کے' : 'of'} ${questionFlow.length - 1}
+                                </span>
+                                <span class="text-sm font-medium text-blue-600">${Math.round(progress)}%</span>
                             </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
-                                <p class="text-gray-600">${this.t(question.description)}</p>
-                            </div>
-                        </div>
-                        
-                        <form id="personalForm" class="space-y-6">
-                            ${question.fields.map(field => `
-                                <div class="form-group">
-                                    <label class="block text-gray-700 font-medium mb-3">${this.t(field.label)}</label>
-                                    ${field.type === 'select' ? `
-                                        <select name="${field.name}" class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" required>
-                                            <option value="">${this.language === 'ur' ? 'منتخب کریں...' : 'Select...'}</option>
-                                            ${field.options.map(opt => `
-                                                <option value="${opt}" ${this.userData.personal[field.name] === opt ? 'selected' : ''}>${this.t(opt)}</option>
-                                            `).join('')}
-                                        </select>
-                                    ` : `
-                                        <input type="${field.type}" name="${field.name}" value="${this.userData.personal[field.name] || ''}" 
-                                            class="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
-                                            placeholder="${this.language === 'ur' ? `اپنا ${this.t(field.label)} درج کریں` : `Enter your ${field.label.toLowerCase()}`}" required>
-                                    `}
-                                </div>
-                            `).join('')}
-                        </form>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
-                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
-                            </button>
-                            <button onclick="CareerPathfinder.savePersonalInfo()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot ${i < 2 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            },
-            
-            // Save personal information from form
-            savePersonalInfo() {
-                const form = document.getElementById('personalForm');
-                const formData = new FormData(form);
-                
-                if (form.checkValidity()) {
-                    for (let [key, value] of formData.entries()) {
-                        this.userData.personal[key] = value;
-                    }
-                    this.saveToLocalStorage();
-                    this.nextStep();
-                } else {
-                    form.reportValidity();
-                }
-            },
-            
-            // Render interests selection
-            renderInterests() {
-                const question = this.questions.find(q => q.id === 3);
-                const selectedCount = this.userData.interests.length;
-                
-                return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
-                        <div class="flex items-center mb-8">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas ${question.icon} text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
-                                <p class="text-gray-600">${this.t(question.description)}</p>
-                                <p class="text-blue-600 font-medium mt-2">
-                                    ${this.t('select-up-to')} ${question.maxSelections} • 
-                                    ${selectedCount} ${this.t('selected')}
-                                </p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-                            ${question.options.map(option => {
-                                const isSelected = this.userData.interests.includes(option.id);
-                                return `
-                                    <div class="interest-card border-2 ${isSelected ? 'selected border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'} rounded-xl p-6 text-center transition-all duration-300" 
-                                         onclick="CareerPathfinder.toggleInterest('${option.id}', ${question.maxSelections})">
-                                        <div class="w-16 h-16 mx-auto mb-4 rounded-full ${isSelected ? 'bg-blue-500' : 'bg-gray-100'} flex items-center justify-center transition-all duration-300">
-                                            <i class="fas ${option.icon} ${isSelected ? 'text-white' : 'text-gray-600'} text-2xl"></i>
-                                        </div>
-                                        <h3 class="font-bold text-gray-800 text-lg mb-2">${this.t(option.title)}</h3>
-                                        <p class="text-gray-600 text-sm mb-4">${option.description}</p>
-                                        
-                                        ${isSelected ? `
-                                            <div class="mt-2">
-                                                <span class="inline-block bg-blue-500 text-white text-xs px-3 py-1 rounded-full">
-                                                    <i class="fas fa-check mr-1"></i> ${this.language === 'ur' ? 'منتخب شدہ' : 'Selected'}
-                                                </span>
-                                            </div>
-                                        ` : ''}
-                                        
-                                        <div class="mt-4 flex justify-center flex-wrap gap-1">
-                                            ${Object.keys(option.skills).map(skill => `
-                                                <span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${skill}</span>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
+                        <h2 class="question-text font-bold text-gray-800 mb-8 text-center">${content.question}</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            ${optionsHTML}
                         </div>
                         
-                        <div class="flex justify-between mt-8">
-                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
-                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
-                            </button>
-                            <button onclick="CareerPathfinder.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot ${i < 3 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            },
-            
-            // Toggle interest selection
-            toggleInterest(interestId, maxSelections) {
-                const index = this.userData.interests.indexOf(interestId);
-                const question = this.questions.find(q => q.id === 3);
-                const option = question.options.find(opt => opt.id === interestId);
-                
-                if (index === -1) {
-                    // Add selection if under max
-                    if (this.userData.interests.length < maxSelections) {
-                        this.userData.interests.push(interestId);
-                        
-                        // Add skills from this interest
-                        if (option.skills) {
-                            Object.keys(option.skills).forEach(skill => {
-                                this.userData.skills[skill] = (this.userData.skills[skill] || 0) + option.skills[skill];
-                            });
-                        }
-                    }
-                } else {
-                    // Remove selection
-                    this.userData.interests.splice(index, 1);
-                    
-                    // Remove skills from this interest
-                    if (option.skills) {
-                        Object.keys(option.skills).forEach(skill => {
-                            this.userData.skills[skill] = (this.userData.skills[skill] || 0) - option.skills[skill];
-                        });
-                    }
-                }
-                
-                this.saveToLocalStorage();
-                this.render();
-            },
-            
-            // Render skills assessment
-            renderSkills() {
-                const question = this.questions.find(q => q.id === 4);
-                
-                return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
-                        <div class="flex items-center mb-8">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas ${question.icon} text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
-                                <p class="text-gray-600">${this.t(question.description)}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-8">
-                            ${question.skills.map(skill => {
-                                const currentValue = this.userData.skills[skill.name] || 0;
-                                const skillLevels = [
-                                    this.t('beginner'),
-                                    this.t('intermediate'), 
-                                    this.t('advanced'),
-                                    this.t('expert')
-                                ];
-                                
-                                return `
-                                    <div class="border border-gray-200 rounded-xl p-6 hover:border-blue-400 transition-all duration-300">
-                                        <div class="flex justify-between items-center mb-4">
-                                            <div>
-                                                <h3 class="font-bold text-gray-800 text-lg">${skill.label}</h3>
-                                                <p class="text-gray-600">${skill.description}</p>
-                                            </div>
-                                            <div class="text-right">
-                                                <span class="inline-block bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                                                    ${currentValue > 0 ? skillLevels[currentValue-1] || 'Expert' : 'Not rated'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="flex space-x-2">
-                                            ${[1, 2, 3, 4].map(level => `
-                                                <button type="button" 
-                                                    onclick="CareerPathfinder.setSkillLevel('${skill.name}', ${level})"
-                                                    class="skill-level-btn flex-1 py-3 text-center rounded-lg transition-all duration-300 ${currentValue >= level ? 'bg-blue-500 text-white shadow-md' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}">
-                                                    ${level}
-                                                </button>
-                                            `).join('')}
-                                        </div>
-                                        <div class="flex justify-between text-xs text-gray-500 mt-2">
-                                            <span>${this.t('beginner')}</span>
-                                            <span>${this.t('expert')}</span>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
-                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
-                            </button>
-                            <button onclick="CareerPathfinder.nextStep()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot ${i < 4 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            },
-            
-            // Set skill level
-            setSkillLevel(skillName, level) {
-                this.userData.skills[skillName] = level;
-                this.saveToLocalStorage();
-                this.render();
-            },
-            
-            // Render workstyle preferences
-            renderWorkstyle() {
-                const question = this.questions.find(q => q.id === 5);
-                const selectedOption = this.userData.answers.workstyle;
-                
-                return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
-                        <div class="flex items-center mb-8">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas ${question.icon} text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800">${this.t(question.title)}</h1>
-                                <p class="text-gray-600">${this.t(question.description)}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                            ${question.options.map(option => {
-                                const isSelected = selectedOption === option.id;
-                                return `
-                                    <div class="border-2 ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200'} rounded-xl p-6 cursor-pointer transition-all duration-300 hover:border-blue-400 hover:shadow-md" 
-                                         onclick="CareerPathfinder.selectWorkstyle('${option.id}')">
-                                        <div class="text-center">
-                                            <i class="fas ${option.icon} text-3xl ${isSelected ? 'text-blue-600' : 'text-gray-500'} mb-3"></i>
-                                            <h3 class="font-bold text-gray-800 text-lg">${this.t(option.title)}</h3>
-                                            <p class="text-gray-600 mt-2">${option.description}</p>
-                                            ${isSelected ? `
-                                                <div class="mt-3">
-                                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                                        ${this.language === 'ur' ? 'منتخب شدہ' : 'Selected'}
-                                                    </span>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
-                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
-                            </button>
-                            <button onclick="CareerPathfinder.calculateResults()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                                ${this.t('next')} <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot ${i < 5 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            },
-            
-            // Select workstyle option
-            selectWorkstyle(workstyleId) {
-                this.userData.answers.workstyle = workstyleId;
-                
-                // Add skills from selected workstyle
-                const question = this.questions.find(q => q.id === 5);
-                const option = question.options.find(opt => opt.id === workstyleId);
-                
-                if (option.skills) {
-                    Object.keys(option.skills).forEach(skill => {
-                        this.userData.skills[skill] = (this.userData.skills[skill] || 0) + option.skills[skill];
-                    });
-                }
-                
-                this.saveToLocalStorage();
-                this.render();
-            },
-            
-            // Calculate career matches
-            calculateResults() {
-                // Calculate match scores for each career
-                this.careerMatches = this.careers.map(career => {
-                    let score = 0;
-                    let totalWeight = 0;
-                    
-                    // Calculate based on required skills
-                    for (const [skill, weight] of Object.entries(career.skills)) {
-                        const userSkillLevel = this.userData.skills[skill] || 0;
-                        score += userSkillLevel * weight;
-                        totalWeight += 5 * weight; // Max skill level is 5
-                    }
-                    
-                    const matchPercentage = totalWeight > 0 ? (score / totalWeight) * 100 : 0;
-                    
-                    return {
-                        ...career,
-                        matchScore: Math.min(matchPercentage, 100)
-                    };
-                }).sort((a, b) => b.matchScore - a.matchScore);
-                
-                this.saveToLocalStorage();
-                this.nextStep();
-            },
-            
-            // Render results screen
-            renderResults() {
-                return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
-                        <div class="flex items-center mb-8">
-                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mr-4">
-                                <i class="fas fa-trophy text-blue-600"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800">${this.t('step6-title')}</h1>
-                                <p class="text-gray-600">${this.t('step6-desc')}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-6 mt-8">
-                            ${this.careerMatches.map((career, index) => {
-                                const demandClass = career.demand === 'high' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-                                return `
-                                    <div class="career-card border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
-                                        <div class="flex flex-col md:flex-row md:items-center">
-                                            <div class="flex items-center mb-4 md:mb-0 md:flex-1">
-                                                <div class="w-16 h-16 rounded-xl bg-gradient-to-r ${career.color} flex items-center justify-center mr-4">
-                                                    <i class="fas ${career.icon} text-white text-2xl"></i>
-                                                </div>
-                                                <div>
-                                                    <h3 class="font-bold text-gray-800 text-xl">${career.name}</h3>
-                                                    <p class="text-gray-600">${career.description}</p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div class="flex items-center space-x-4">
-                                                <div class="text-center">
-                                                    <div class="text-2xl font-bold text-blue-600">${Math.round(career.matchScore)}%</div>
-                                                    <div class="text-gray-600 text-sm">${this.t('match')}</div>
-                                                </div>
-                                                <button onclick="CareerPathfinder.viewRoadmap('${career.id}')" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 transform hover:scale-105">
-                                                    ${this.t('view-roadmap')}
-                                                </button>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="flex flex-wrap gap-2 mt-4">
-                                            <span class="${demandClass} px-3 py-1 rounded-full text-sm font-medium">
-                                                ${this.t('demand')}: ${this.t(career.demand)}
-                                            </span>
-                                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                ${this.t('salary')}: ${career.salary}
-                                            </span>
-                                            <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium">
-                                                ${this.t('growth')}: ${career.growth}
-                                            </span>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
-                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
-                            </button>
-                            <button onclick="CareerPathfinder.viewRoadmap('${this.careerMatches[0].id}')" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                                ${this.t('view-roadmap')} <i class="fas fa-arrow-right ml-2"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot ${i < 6 ? 'bg-blue-500 active' : 'bg-gray-300'}"></div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
-            },
-            
-            // View roadmap for a specific career
-            viewRoadmap(careerId) {
-                this.selectedCareer = this.careers.find(c => c.id === careerId);
-                this.saveToLocalStorage();
-                this.nextStep();
-            },
-            
-            // Render roadmap screen
-            renderRoadmap() {
-                const career = this.selectedCareer || this.careerMatches[0];
-                
-                return `
-                    <div class="bg-white rounded-2xl shadow-xl p-8 step-container slide-in-right">
-                        <div class="flex items-center mb-8">
-                            <div class="w-12 h-12 rounded-full bg-gradient-to-r ${career.color} flex items-center justify-center mr-4">
-                                <i class="fas ${career.icon} text-white"></i>
-                            </div>
-                            <div>
-                                <h1 class="text-2xl font-bold text-gray-800">${this.t('step7-title')}</h1>
-                                <p class="text-gray-600">${this.t('step7-desc')} <span class="font-semibold">${career.name}</span></p>
-                            </div>
-                        </div>
-                        
-                        <div class="space-y-6 mt-8">
-                            ${Object.entries(career.roadmap).map(([phaseKey, phase]) => `
-                                <div class="roadmap-phase border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-300">
-                                    <div class="flex justify-between items-center mb-4">
-                                        <h3 class="font-bold text-gray-800 text-xl">${phase.title}</h3>
-                                        <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                                            ${phase.duration}
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="mb-4">
-                                        <h4 class="font-semibold text-gray-700 mb-2">Skills to Learn:</h4>
-                                        <div class="flex flex-wrap gap-2">
-                                            ${phase.skills.map(skill => `
-                                                <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
-                                                    ${skill}
-                                                </span>
-                                            `).join('')}
-                                        </div>
-                                    </div>
-                                    
-                                    <div>
-                                        <h4 class="font-semibold text-gray-700 mb-2">Learning Resources:</h4>
-                                        <ul class="list-disc list-inside text-gray-600 space-y-1">
-                                            ${phase.resources.map(resource => `
-                                                <li>${resource}</li>
-                                            `).join('')}
-                                        </ul>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        
-                        <div class="mt-8 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200">
-                            <h3 class="font-bold text-gray-800 text-lg mb-2">Ready to start your journey?</h3>
-                            <p class="text-gray-600 mb-4">Get personalized reminders and track your progress</p>
-                            <div class="flex flex-col sm:flex-row gap-4">
-                                <input type="email" id="emailInput" placeholder="${this.language === 'ur' ? 'اپنا ای میل درج کریں' : 'Enter your email'}" class="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                                <button onclick="CareerPathfinder.startTracking()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 whitespace-nowrap">
-                                    ${this.t('start-tracking')}
+                        <div class="flex ${this.language === 'ur' ? 'flex-row-reverse' : ''} justify-between">
+                            ${this.currentStep > 1 ? `
+                                <button onclick="CareerPathfinderPro.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
+                                    <i class="fas fa-arrow-${this.language === 'ur' ? 'right' : 'left'} mr-2"></i> ${this.language === 'ur' ? 'پیچھے' : 'Back'}
                                 </button>
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-between mt-8">
-                            <button onclick="CareerPathfinder.prevStep()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-xl transition-all duration-300">
-                                <i class="fas fa-arrow-left mr-2"></i> ${this.t('back')}
-                            </button>
-                            <button onclick="CareerPathfinder.restart()" class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-300 transform hover:scale-105">
-                                ${this.t('restart')} <i class="fas fa-redo ml-2"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="progress-dots">
-                            ${Array.from({length: this.totalSteps}, (_, i) => `
-                                <div class="progress-dot bg-blue-500 active"></div>
-                            `).join('')}
+                            ` : '<div></div>'}
                         </div>
                     </div>
                 `;
-            },
-            
-            // Start progress tracking
-            startTracking() {
-                const emailInput = document.getElementById('emailInput');
-                const email = emailInput.value;
-                
-                if (email && this.validateEmail(email)) {
-                    alert(`Thank you! We'll send ${this.selectedCareer.name} learning resources and progress reminders to ${email}. Check your email to get started!`);
-                    // In a real app, you would send this to your backend
-                    console.log('Tracking started for:', email, 'Career:', this.selectedCareer.name);
-                    emailInput.value = '';
-                } else {
-                    alert('Please enter a valid email address.');
-                }
-            },
-            
-            // Validate email format
-            validateEmail(email) {
-                const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return re.test(email);
-            },
-            
-            // Restart the questionnaire
-            restart() {
-                this.currentStep = 1;
-                this.userData = {
-                    personal: {},
-                    skills: {},
-                    interests: [],
-                    answers: {}
-                };
-                this.careerMatches = null;
-                this.selectedCareer = null;
-                localStorage.removeItem('careerPathfinderData');
-                this.updateURL();
-                this.render();
             }
         };
 
         // Initialize the application when the page loads
         document.addEventListener('DOMContentLoaded', () => {
-            CareerPathfinder.init();
+            CareerPathfinderPro.init();
         });
     </script>
 </body>
